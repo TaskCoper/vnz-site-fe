@@ -37,6 +37,9 @@
   --animate-layer-in: layer-in 0.45s ease both;
   --animate-layer-out: layer-out 0.45s ease both;
   --animate-hero-rise: hero-rise 0.8s cubic-bezier(0.22, 0.8, 0.18, 1) both;
+  /* Downward bob for the hero scroll cue; slow pulse for accent glows. */
+  --animate-float: float 1.9s ease-in-out infinite;
+  --animate-pulse-glow: pulse-glow 3.2s ease-in-out infinite;
 }
 
 @keyframes bob {
@@ -87,6 +90,46 @@
 @keyframes hero-rise {
   from { opacity: 0; transform: translateY(22px); }
   to { opacity: 1; transform: translateY(0); }
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(9px); }
+}
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+
+/* Scroll-reveal — elements fade-rise as they enter the viewport. An
+   IntersectionObserver toggles `.is-in`; stagger via inline --reveal-delay. */
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition:
+    opacity 0.7s ease,
+    transform 0.7s cubic-bezier(0.22, 0.8, 0.18, 1);
+  transition-delay: var(--reveal-delay, 0s);
+}
+.reveal.is-in {
+  opacity: 1;
+  transform: none;
+}
+
+/* Smooth anchor scrolling, offset so the fixed nav never covers a section top.
+   `scroll-snap-type: y proximity` turns the page into a gentle "full-page" snap:
+   each top-level <section> (tagged `scroll-snap-align: start`) pulls to the top
+   when the scroll settles nearby — but `proximity` (not `mandatory`) means the
+   tall Giới-thiệu section, and any free-scroll between snap points, never trap
+   the user. The dark `bg-ink` seams hide the 4.5rem nav offset above a snap. */
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 4.5rem;
+  scroll-snap-type: y proximity;
+}
+/* Top-level page sections (+ the footer) are the snap targets. */
+main > section,
+footer {
+  scroll-snap-align: start;
 }
 
 /* Crisp pixel scaling for all art assets. */
@@ -302,6 +345,184 @@
   }
 }
 
+/* ================================================================== *
+ * Scroll-driven story animations — the "Giới thiệu / manifesto" act.
+ * lenis.dev-style scrubbed reveals built on NATIVE CSS scroll-driven
+ * animations (`animation-timeline: view()/scroll()`), no JS / no deps.
+ *
+ * Progressive enhancement is the whole contract here: every effect lives
+ * inside `@supports`, and each element's DEFAULT (un-enhanced) state is its
+ * FINAL, fully-visible one. Browsers without scroll-timeline support — and
+ * reduced-motion users — therefore just see the finished layout, never blank
+ * or half-faded content. Chromium/Edge (the repo's QA browser) gets the full
+ * scrubbed choreography.
+ * ================================================================== */
+
+/* Kinetic per-word headline reveal. Words are laid out inline-block (so the
+   transform applies) and spaced manually; spacing + visibility are the default
+   so unsupported engines read normally. */
+.s-words > span {
+  display: inline-block;
+  margin-inline-end: 0.26em;
+}
+
+@supports (animation-timeline: view()) {
+  /* One-shot scrubbed entrances — each keyed to its own viewport progress. */
+  .s-rise  { animation: s-rise  linear both; animation-timeline: view(); animation-range: entry 0% cover 24%; }
+  .s-fade  { animation: s-fade  linear both; animation-timeline: view(); animation-range: entry 0% cover 30%; }
+  .s-left  { animation: s-left  linear both; animation-timeline: view(); animation-range: entry 0% cover 28%; }
+  .s-right { animation: s-right linear both; animation-timeline: view(); animation-range: entry 0% cover 28%; }
+  .s-zoom  { animation: s-zoom  linear both; animation-timeline: view(); animation-range: entry 4% cover 36%; }
+
+  /* Word-by-word: each span starts a little later than the last via --i. */
+  .s-words > span {
+    animation: s-word linear both;
+    animation-timeline: view();
+    animation-range: entry calc(2% + var(--i, 0) * 2.5%)
+                     entry calc(48% + var(--i, 0) * 2.5%);
+  }
+
+  /* Gentle parallax drift, scrubbed across the element's whole pass. */
+  .s-par {
+    animation: s-par linear both;
+    animation-timeline: view();
+    animation-range: cover 0% cover 100%;
+  }
+
+  /* Vertical reading-progress rail — fills as the section travels past.
+     Consumes the `--about` view-timeline declared on the section itself. */
+  .s-progress {
+    transform: scaleY(0);
+    transform-origin: top;
+    animation: s-progress linear both;
+    animation-timeline: --about;
+    animation-range: entry 55% exit 5%;
+  }
+}
+
+@keyframes s-rise { from { opacity: 0; transform: translateY(48px); } to { opacity: 1; transform: none; } }
+@keyframes s-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes s-left { from { opacity: 0; transform: translateX(-10vw); } to { opacity: 1; transform: none; } }
+@keyframes s-right { from { opacity: 0; transform: translateX(10vw); } to { opacity: 1; transform: none; } }
+@keyframes s-zoom { from { opacity: 0; transform: scale(0.82); } to { opacity: 1; transform: none; } }
+@keyframes s-word { from { opacity: 0.06; transform: translateY(0.36em); filter: blur(3px); } to { opacity: 1; transform: none; filter: blur(0); } }
+@keyframes s-par { from { transform: translateY(38px); } to { transform: translateY(-38px); } }
+@keyframes s-progress { to { transform: scaleY(1); } }
+
+/* Horizontal pin — vertical scroll scrubs a wide track sideways across a pinned
+   viewport (the "inspirations" showpiece). DEFAULT (unsupported) is a perfectly
+   usable swipeable carousel; only Chromium upgrades it to the pinned scrub. */
+.h-pin-sticky {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.h-pin-track {
+  display: flex;
+  gap: 1.25rem;
+  overflow-x: auto;
+  padding-inline: 1.25rem;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+}
+.h-pin-track::-webkit-scrollbar { display: none; }
+.h-pin-panel { scroll-snap-align: center; }
+
+@supports (animation-timeline: scroll()) {
+  .h-pin { height: 360vh; view-timeline-name: --hpin; view-timeline-axis: block; }
+  .h-pin-sticky { position: sticky; top: 0; height: 100svh; overflow: hidden; }
+  .h-pin-track {
+    /* max-content is what makes the scrub work: translateX(-100%) now equals the
+       full content width, not the (viewport-constrained) flex box width. */
+    width: max-content;
+    overflow: visible;
+    padding-inline: max(1.25rem, calc((100vw - 84rem) / 2));
+    animation: h-track linear both;
+    animation-timeline: --hpin;
+    animation-range: contain 0% contain 100%;
+  }
+}
+@keyframes h-track { to { transform: translateX(calc(-100% + 100vw)); } }
+
+/* ================================================================== *
+ * Cinematic "wow" layer — giant kinetic type + pixel-art windows.
+ * The signature move: huge headlines whose letterforms are CLIPPED to a
+ * Vietnamese pixel scene, with the image slowly panning inside the type as
+ * you scroll (a moving window onto Việt Nam). Plus a lenis-style scale-up
+ * beat, parallax backdrops, and warm ember motes. All scroll-scrubbing is
+ * @supports-gated; the static fallback (image-filled text) still looks good.
+ * ================================================================== */
+
+/* Pixel art clipped into the letters. Image set per-use via --clip-img; a
+   warm fallback color keeps the text visible if the art ever fails to load. */
+.clip-art {
+  background-color: var(--color-sunset);
+  background-image: var(--clip-img);
+  background-size: cover;
+  background-position: 50% 42%;
+  background-repeat: no-repeat;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 8px 26px rgba(0, 0, 0, 0.5));
+}
+@supports (animation-timeline: view()) {
+  /* Pan the scene within the type across the element's whole pass. */
+  .clip-art {
+    animation: clip-pan linear both;
+    animation-timeline: view();
+    animation-range: cover 0% cover 100%;
+  }
+  /* Dramatic scroll scale-up (the lenis "ENTER" beat). Solid/gradient text. */
+  .s-grow {
+    animation: s-grow linear both;
+    animation-timeline: view();
+    animation-range: entry 6% exit 26%;
+  }
+  /* Slow parallax drift for a backdrop image layer. */
+  .s-bgpar {
+    animation: s-bgpar linear both;
+    animation-timeline: view();
+    animation-range: cover 0% cover 100%;
+  }
+}
+@keyframes clip-pan {
+  from { background-position: 50% 14%; }
+  to { background-position: 50% 86%; }
+}
+@keyframes s-grow {
+  from { opacity: 0.3; transform: scale(0.8); }
+  55% { opacity: 1; }
+  to { opacity: 1; transform: scale(1.06); }
+}
+@keyframes s-bgpar {
+  from { transform: translate3d(0, -7%, 0) scale(1.14); }
+  to { transform: translate3d(0, 7%, 0) scale(1.14); }
+}
+
+/* Rising ember motes — warm ambient particles (pre-baked positions → SSR-safe,
+   per-mote drift/size/tint/timing from inline style). */
+.mote {
+  position: absolute;
+  bottom: -6vh;
+  border-radius: 9999px;
+  background: radial-gradient(circle, var(--mc, var(--color-gold)), transparent 68%);
+  opacity: 0.5;
+  pointer-events: none;
+  will-change: transform, opacity;
+  animation-name: rise-mote;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+@keyframes rise-mote {
+  0% { transform: translateY(0) translateX(0); opacity: 0; }
+  12% { opacity: 0.65; }
+  88% { opacity: 0.65; }
+  100% { transform: translateY(-115vh) translateX(var(--mx, 24px)); opacity: 0; }
+}
+
 /* Respect reduced-motion: kill the looping ambient animations. */
 @media (prefers-reduced-motion: reduce) {
   .animate-bob,
@@ -310,6 +531,8 @@
   .animate-layer-in,
   .animate-layer-out,
   .animate-hero-rise,
+  .animate-float,
+  .animate-pulse-glow,
   .is-lit .spotlight-cone,
   .petal,
   .spark {
@@ -317,7 +540,52 @@
   }
   .petal,
   .spark { display: none; }
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  /* Scroll-driven story act: drop every scrub to the finished, visible state. */
+  .s-rise,
+  .s-fade,
+  .s-left,
+  .s-right,
+  .s-zoom,
+  .s-par,
+  .s-grow,
+  .s-bgpar,
+  .clip-art,
+  .s-words > span,
+  .s-progress,
+  .h-pin-track {
+    animation: none !important;
+    transform: none !important;
+    opacity: 1 !important;
+  }
+  .s-rise,
+  .s-fade,
+  .s-left,
+  .s-right,
+  .s-zoom,
+  .s-par,
+  .s-words > span,
+  .s-progress,
+  .h-pin-track {
+    filter: none !important;
+  }
+  .mote { display: none !important; }
+  /* Un-pin the horizontal strip so all panels stay reachable by scroll. */
+  .h-pin { height: auto !important; }
+  .h-pin-sticky {
+    position: static !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
   .statbar > .fill {
     transition: none;
+  }
+  html {
+    scroll-behavior: auto;
+    scroll-snap-type: none;
   }
 }

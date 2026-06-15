@@ -63,7 +63,7 @@ export default function RootLayout({
       lang="en"
       className={`${pixelify.variable} ${silkscreen.variable} ${geistMono.variable} ${beVietnam.variable} ${vt323.variable} h-full antialiased`}
     >
-      <body className="min-h-full bg-sky font-mono text-ink">{children}</body>
+      <body className="min-h-full bg-ink font-mono text-cream">{children}</body>
     </html>
   );
 }

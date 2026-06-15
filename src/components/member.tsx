@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   MEMBERS,
   COMPANY_NAME,
@@ -36,6 +36,47 @@ export function Member() {
     return () => window.clearTimeout(t);
   }, [previous]);
 
+  // ───────── Keyboard navigation (← / →) ─────────
+  // The stage section + a live mirror of the current selection. The keydown
+  // listener is bound once (empty deps), so it must read the latest selection
+  // from a ref rather than the stale `selected` captured at bind time.
+  const sectionRef = useRef<HTMLElement>(null);
+  const selectedRef = useRef(selected);
+  selectedRef.current = selected;
+
+  useEffect(() => {
+    // Step `dir` (+1 next / -1 prev) through the roster, wrapping around.
+    const step = (dir: 1 | -1) => {
+      const cur = selectedRef.current;
+      const i = MEMBERS.findIndex((m) => m.slug === cur.slug);
+      const next = MEMBERS[(i + dir + MEMBERS.length) % MEMBERS.length];
+      if (next.slug === cur.slug) return;
+      setPrevious(cur);
+      setSelected(next);
+    };
+
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      // Don't hijack arrows while typing in a field.
+      const t = e.target as HTMLElement | null;
+      const tag = t?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || t?.isContentEditable) return;
+      // Only drive the roster while the stage owns the viewport — otherwise the
+      // user is up on the hero and arrows should behave normally.
+      const el = sectionRef.current;
+      if (!el) return;
+      const r = el.getBoundingClientRect();
+      const mid = window.innerHeight / 2;
+      if (r.top > mid || r.bottom < mid) return;
+      e.preventDefault();
+      step(e.key === "ArrowRight" ? 1 : -1);
+    };
+
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
   // Warm the image cache in idle time so the first hover of each avatar
   // crossfades instantly instead of waiting on a multi-MB hometown PNG.
   useEffect(() => {
@@ -67,6 +108,7 @@ export function Member() {
 
   return (
     <section
+      ref={sectionRef}
       id="members"
       style={{ ["--tint" as string]: tint }}
       className="relative isolate min-h-[100svh] w-full overflow-hidden bg-ink"
@@ -147,7 +189,7 @@ export function Member() {
             alt=""
             aria-hidden
             unoptimized
-            className="pixelated absolute bottom-0 left-1/2 h-[52vh] w-auto -translate-x-1/2 animate-layer-out drop-shadow-[0_8px_30px_rgba(0,0,0,0.6)] sm:h-[60vh] lg:left-[25%] lg:h-[132vh] lg:bottom-[-34vh]"
+            className="pixelated absolute bottom-0 left-1/2 h-[52vh] w-auto -translate-x-1/2 animate-layer-out drop-shadow-[0_8px_30px_rgba(0,0,0,0.6)] sm:h-[60vh] lg:left-[25%] lg:h-[132vh] lg:bottom-[-44vh]"
           />
         )}
         <Image
@@ -156,7 +198,7 @@ export function Member() {
           alt={`${selected.fullName} — ${selected.title}`}
           priority={isDefault}
           unoptimized
-          className="pixelated absolute bottom-0 left-1/2 h-[52vh] w-auto -translate-x-1/2 animate-layer-in drop-shadow-[0_8px_30px_rgba(0,0,0,0.6)] sm:h-[60vh] lg:left-[25%] lg:h-[132vh] lg:bottom-[-34vh]"
+          className="pixelated absolute bottom-0 left-1/2 h-[52vh] w-auto -translate-x-1/2 animate-layer-in drop-shadow-[0_8px_30px_rgba(0,0,0,0.6)] sm:h-[60vh] lg:left-[25%] lg:h-[132vh] lg:bottom-[-44vh]"
         />
       </div>
 
@@ -166,7 +208,7 @@ export function Member() {
         {/* Dossier panel — frosted glass, tint spine + corner ticks. */}
         <div
           key={`info-${selected.slug}`}
-          className="pointer-events-auto ml-auto mt-20 w-full max-w-[25rem] animate-layer-in sm:mt-24 lg:absolute lg:right-[4%] lg:top-[9%] lg:mt-0"
+          className="pointer-events-auto ml-auto mt-20 w-full max-w-[25rem] animate-layer-in sm:mt-24 lg:absolute lg:right-[4%] lg:top-[15%] lg:mt-0"
         >
           <div className="relative border border-cream/10 bg-ink/35 px-7 py-6 text-right font-pixel backdrop-blur-md [box-shadow:0_24px_70px_-24px_rgba(0,0,0,0.85)]">
             {/* Glowing tint spine on the right edge. */}
@@ -198,14 +240,14 @@ export function Member() {
             <div className="space-y-3 text-base sm:text-[17px]">
               {rows.map(([label, value]) => (
                 <p key={label} className="leading-snug">
-                  <span className="text-cream/45">{label}: </span>
+                  <span className="text-cream/65">{label}: </span>
                   <span className="font-medium text-cream">{value}</span>
                 </p>
               ))}
             </div>
 
             <div className="mt-5 border-t border-cream/10 pt-4">
-              <p className="text-sm text-cream/45">Châm ngôn sống</p>
+              <p className="text-sm text-cream/65">Châm ngôn sống</p>
               <p className="mt-1 text-base italic leading-snug text-cream sm:text-[17px]">
                 <span style={{ color: tint }}>“</span>
                 {selected.motto}
@@ -217,7 +259,7 @@ export function Member() {
 
         {/* Brand — mid-right, constant copy, tint accent follows the member. */}
         <div
-          className="ml-auto mt-12 max-w-3xl animate-hero-rise pb-44 text-right sm:mt-16 lg:absolute lg:right-[4%] lg:top-[58%] lg:mt-0 lg:max-w-none lg:pb-0"
+          className="ml-auto mt-12 max-w-3xl animate-hero-rise pb-44 text-right sm:mt-16 lg:absolute lg:right-[4%] lg:top-[63%] lg:mt-0 lg:max-w-none lg:pb-0"
           style={{ animationDelay: "0.12s" }}
         >
           <div
@@ -240,10 +282,19 @@ export function Member() {
         style={{ animationDelay: "0.24s" }}
       >
         {/* Caption naming the on-stage member. */}
-        <p className="mb-3 text-center font-pixel text-sm text-cream/70 [text-shadow:0_1px_8px_rgba(0,0,0,0.9)]">
+        <p className="mb-3 flex flex-wrap items-center justify-center gap-x-2 text-center font-pixel text-sm text-cream/70 [text-shadow:0_1px_8px_rgba(0,0,0,0.9)]">
           <span className="font-semibold text-cream">{selected.fullName}</span>
-          <span className="mx-2 text-cream/30">·</span>
+          <span className="text-cream/30">·</span>
           <span style={{ color: tint }}>{selected.title}</span>
+          {/* Discoverability hint for the ← / → keyboard navigation. */}
+          <span
+            aria-hidden
+            className="ml-1 inline-flex items-center gap-1 border border-cream/25 px-1.5 py-0.5 text-[11px] uppercase tracking-wide text-cream/65"
+          >
+            <kbd className="font-pixel">◄</kbd>
+            <kbd className="font-pixel">►</kbd>
+            <span>chuyển</span>
+          </span>
         </p>
         {/* Frosted dock holding the roster. */}
         <div className="mx-auto flex w-fit max-w-full flex-wrap items-end justify-center gap-2.5 border border-cream/10 bg-ink/45 px-3 py-3 backdrop-blur-md sm:gap-3 sm:px-4">
