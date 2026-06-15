@@ -1,0 +1,323 @@
+@import "tailwindcss";
+
+/* ------------------------------------------------------------------ *
+ * VNZ — 16-bit JRPG landing page design system (Tailwind v4)
+ * Palette sampled from the hero cityscape: cream sunset sky, terracotta
+ * plaza, lantern red, lotus pink, the logo's sunset orange, jade lake.
+ * ------------------------------------------------------------------ */
+@theme {
+  --color-sky: #f7e8c6;
+  --color-cream: #fbf4e2;
+  --color-parchment: #f3e4c1;
+  --color-ink: #1b2433;
+  --color-ink-soft: #46506a;
+  --color-terracotta: #c47a55;
+  --color-clay: #a85d3e;
+  --color-lantern: #d8443a;
+  --color-sunset: #ef7f1f;
+  --color-ember: #e8541f;
+  --color-gold: #f0b34a;
+  --color-jade: #5fa39a;
+  --color-lotus: #e79bb0;
+
+  --font-display: var(--font-pixelify), "Pixelify Sans", system-ui, sans-serif;
+  --font-ui: var(--font-silkscreen), "Silkscreen", system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  /* Vietnamese-capable proportional face — full-diacritic profile copy + brand. */
+  --font-viet: var(--font-be-vietnam), "Be Vietnam Pro", system-ui, sans-serif;
+  /* Vietnamese-capable PIXEL face (retro CRT/terminal) — member page gaming look. */
+  --font-pixel: var(--font-vt323), "VT323", ui-monospace, monospace;
+
+  --animate-bob: bob 3.6s ease-in-out infinite;
+  --animate-sway: sway 5s ease-in-out infinite;
+  --animate-twinkle: twinkle 2.4s steps(2) infinite;
+  --animate-rise: rise 0.7s steps(8) both;
+  /* Hero character-viewer crossfades: the hometown backdrop + character + profile
+     fade between members; the brand block rises once on mount. */
+  --animate-layer-in: layer-in 0.45s ease both;
+  --animate-layer-out: layer-out 0.45s ease both;
+  --animate-hero-rise: hero-rise 0.8s cubic-bezier(0.22, 0.8, 0.18, 1) both;
+}
+
+@keyframes bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-7px); }
+}
+@keyframes sway {
+  0%, 100% { transform: rotate(-3deg); }
+  50% { transform: rotate(3deg); }
+}
+@keyframes twinkle {
+  0%, 100% { opacity: 0.25; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.15); }
+}
+@keyframes fall {
+  0% { transform: translateY(-10vh) translateX(0) rotate(0deg); opacity: 0; }
+  10% { opacity: 0.9; }
+  90% { opacity: 0.9; }
+  100% { transform: translateY(110vh) translateX(var(--drift, 40px)) rotate(220deg); opacity: 0; }
+}
+@keyframes rise {
+  from { transform: translateY(14px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+/* Spark glint: pops near the light source, twinkles, then drifts + falls down
+   the beam. Per-spark drift/distance come from --dx / --dy (inline). */
+@keyframes spark {
+  0%   { transform: translate(0, 0) scale(0) rotate(0deg);   opacity: 0; }
+  12%  { transform: translate(calc(var(--dx, 0px) * 0.2), 4px) scale(1.15) rotate(25deg); opacity: 1; }
+  30%  { transform: translate(calc(var(--dx, 0px) * 0.45), 14px) scale(0.65) rotate(60deg); opacity: 0.85; }
+  55%  { transform: translate(calc(var(--dx, 0px) * 0.7), 28px) scale(1) rotate(110deg); opacity: 1; }
+  100% { transform: translate(var(--dx, 0px), var(--dy, 50px)) scale(0.25) rotate(190deg); opacity: 0; }
+}
+@keyframes spotlight-flicker {
+  0%, 100% { opacity: 1; }
+  45% { opacity: 0.9; }
+  70% { opacity: 0.97; }
+}
+/* Crossfade between members in the hero character-viewer. */
+@keyframes layer-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes layer-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+@keyframes hero-rise {
+  from { opacity: 0; transform: translateY(22px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Crisp pixel scaling for all art assets. */
+.pixelated {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+/* Falling lotus petals — set per-petal via inline style (--drift, etc). */
+.petal {
+  position: absolute;
+  top: -6vh;
+  width: 10px;
+  height: 10px;
+  border-radius: 60% 0 60% 0;
+  background: var(--color-lotus);
+  opacity: 0.85;
+  animation-name: fall;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+/* Sparkle glints riding the active member's spotlight beam — gold pixel stars
+   with a warm glow. They live in a `.spark-field` pinned to the upper part of
+   each member's beam; the field is invisible (and the glints paused) until that
+   member is `.is-lit`, so the sparkles follow the spotlight from character to
+   character. Drift/distance/size/timing are set per-spark via inline style. */
+.spark-field {
+  position: absolute;
+  left: 50%;
+  bottom: 58%; /* cluster the glints in the beam around the head + shoulders */
+  width: 115%;
+  height: 72%;
+  transform: translateX(-50%);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.spark {
+  position: absolute;
+  line-height: 1;
+  /* Bright gold core wrapped in a crisp 1px ink pixel-outline (so it reads on
+     the pale sunset sky) plus a saturated warm glow (so it also pops on the
+     dark spotlight dimmer). */
+  color: #ffe2a0;
+  text-shadow:
+    1px 0 0 var(--color-ink), -1px 0 0 var(--color-ink),
+    0 1px 0 var(--color-ink), 0 -1px 0 var(--color-ink),
+    0 0 6px var(--color-sunset),
+    0 0 13px var(--color-ember),
+    0 0 20px color-mix(in srgb, var(--color-gold) 75%, transparent);
+  pointer-events: none;
+  will-change: transform, opacity;
+  animation-name: spark;
+  animation-timing-function: ease-in;
+  animation-iteration-count: infinite;
+  /* Frozen until the parent member is spotlit. */
+  animation-play-state: paused;
+}
+/* Reveal the field + run the glints only for the lit member. */
+.is-lit .spark-field {
+  opacity: 1;
+}
+.is-lit .spark {
+  animation-play-state: running;
+}
+
+@layer components {
+  /* Chunky double pixel border (ink / cream / ink), zero radius. */
+  .pixel-frame {
+    border-radius: 0;
+    box-shadow:
+      0 0 0 3px var(--color-ink),
+      0 0 0 6px var(--color-cream),
+      0 0 0 9px var(--color-ink);
+  }
+
+  /* Pressable 8-bit button with a hard 3D drop shadow. */
+  .btn-pixel {
+    font-family: var(--font-ui);
+    border-radius: 0;
+    letter-spacing: 0.04em;
+    background: var(--color-ink);
+    color: var(--color-cream);
+    box-shadow:
+      0 0 0 3px var(--color-ink),
+      0 0 0 6px var(--color-cream),
+      6px 6px 0 6px rgba(15, 20, 32, 0.45);
+    transition: transform 0.08s steps(2), box-shadow 0.08s steps(2),
+      background 0.15s;
+  }
+  .btn-pixel:hover {
+    background: var(--color-ember);
+    box-shadow:
+      0 0 0 3px var(--color-ink),
+      0 0 0 6px var(--color-cream),
+      6px 6px 0 6px rgba(15, 20, 32, 0.45),
+      0 0 22px 2px color-mix(in srgb, var(--color-sunset) 70%, transparent);
+  }
+  .btn-pixel:active {
+    transform: translate(4px, 4px);
+    box-shadow:
+      0 0 0 3px var(--color-ink),
+      0 0 0 6px var(--color-cream),
+      2px 2px 0 6px rgba(15, 20, 32, 0.45);
+  }
+
+  /* NES-style segmented stat bar. Fill width is driven by --val and only
+     expands once the card scrolls into view (.is-visible). */
+  .statbar {
+    position: relative;
+    height: 14px;
+    padding: 3px;
+    background: #11182a;
+    box-shadow: inset 0 0 0 2px #000, inset 0 0 0 3px #2c3650;
+    overflow: hidden;
+  }
+  .statbar > .fill {
+    height: 100%;
+    width: 0;
+    background-image:
+      repeating-linear-gradient(
+        90deg,
+        rgba(0, 0, 0, 0.32) 0 1px,
+        transparent 1px 9px
+      ),
+      linear-gradient(180deg, var(--c, var(--color-sunset)), color-mix(in srgb, var(--c, var(--color-ember)) 65%, #000));
+    transition: width 1s cubic-bezier(0.22, 0.8, 0.18, 1);
+    transition-delay: var(--delay, 0s);
+  }
+  .is-visible .statbar > .fill {
+    width: var(--val, 0%);
+  }
+
+  /* Subtle CRT scanline overlay. */
+  .scanlines {
+    position: relative;
+  }
+  .scanlines::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+      0deg,
+      rgba(0, 0, 0, 0.07) 0 1px,
+      transparent 1px 3px
+    );
+    mix-blend-mode: multiply;
+  }
+
+  /* Center-stage spotlight cone projected over the lit character. Sits behind
+     the art (z:-1 within the lifted, z-30 wrapper) and uses `screen` blend so
+     it reads as real light pooling over the darkened stage. Toggled by .is-lit. */
+  .spotlight-cone {
+    position: absolute;
+    left: 50%;
+    bottom: -4%;
+    z-index: -1;
+    width: 235%;
+    height: 168%;
+    transform: translateX(-50%);
+    pointer-events: none;
+    clip-path: polygon(43% 0%, 57% 0%, 100% 100%, 0% 100%);
+    background: linear-gradient(
+      to bottom,
+      rgba(255, 248, 230, 0) 0%,
+      rgba(255, 248, 230, 0.1) 14%,
+      rgba(255, 246, 224, 0.2) 52%,
+      rgba(255, 244, 216, 0.32) 100%
+    );
+    filter: blur(7px);
+    mix-blend-mode: screen;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  /* Soft pool of light at the character's feet. */
+  .spotlight-cone::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    bottom: 1%;
+    width: 62%;
+    height: 16%;
+    transform: translateX(-50%);
+    background: radial-gradient(
+      ellipse at center,
+      rgba(255, 246, 224, 0.55),
+      transparent 70%
+    );
+    filter: blur(4px);
+  }
+  .is-lit .spotlight-cone {
+    opacity: 1;
+    animation: spotlight-flicker 4.5s ease-in-out infinite;
+  }
+
+  /* Elliptical ground shadow under standing characters. */
+  .ground-shadow::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    bottom: -2px;
+    width: 72%;
+    height: 12px;
+    transform: translateX(-50%);
+    background: radial-gradient(
+      ellipse at center,
+      rgba(40, 24, 14, 0.4) 0%,
+      transparent 70%
+    );
+    pointer-events: none;
+  }
+}
+
+/* Respect reduced-motion: kill the looping ambient animations. */
+@media (prefers-reduced-motion: reduce) {
+  .animate-bob,
+  .animate-sway,
+  .animate-twinkle,
+  .animate-layer-in,
+  .animate-layer-out,
+  .animate-hero-rise,
+  .is-lit .spotlight-cone,
+  .petal,
+  .spark {
+    animation: none !important;
+  }
+  .petal,
+  .spark { display: none; }
+  .statbar > .fill {
+    transition: none;
+  }
+}
