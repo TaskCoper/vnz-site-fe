@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 /** Site flow (matches page section order). Labels carry diacritics, so they
  *  render in `font-pixel` (VT323) — the Silkscreen UI face has no Vietnamese. */
 const SECTIONS = [
+  { id: "top", label: "Trang chủ" },
   { id: "about", label: "Giới thiệu" },
   { id: "members", label: "Đội ngũ" },
   { id: "products", label: "Sản phẩm" },
@@ -60,7 +61,11 @@ export function SiteNav() {
     >
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-5 py-3 sm:px-8 sm:py-4">
         {/* Logo — dark mark on the bright hero, cream mark on the dark bar. */}
-        <a href="#top" className="flex items-center gap-2" aria-label="VNZ home">
+        <a
+          href="#top"
+          className="flex items-center gap-2"
+          aria-label="VNZ home"
+        >
           <span className="relative block w-16 sm:w-28">
             <Image
               src="/general/logo-light.png"
@@ -104,7 +109,9 @@ export function SiteNav() {
                   {s.label}
                   <span
                     className={`pointer-events-none absolute inset-x-2 bottom-1 h-[2px] origin-left bg-ember transition-transform duration-200 ease-out ${
-                      isActive ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"
+                      isActive
+                        ? "scale-x-100"
+                        : "scale-x-0 group-hover:scale-x-100"
                     }`}
                   />
                 </a>

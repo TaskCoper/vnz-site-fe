@@ -253,6 +253,21 @@ function Kinetic({
   );
 }
 
+/**
+ * Fade spacer between story beats — a band of empty space with a hairline that
+ * dissolves out to both sides and a faint glowing node at centre. Gives each
+ * full-screen act room to breathe instead of butting straight into the next.
+ * Purely decorative; collapses gracefully under reduced-motion (it's static).
+ */
+function ActGap() {
+  return (
+    <div aria-hidden className="relative h-[clamp(4rem,13vh,9rem)] w-full">
+      <span className="absolute left-1/2 top-1/2 h-px w-[min(88%,38rem)] -translate-x-1/2 -translate-y-1/2 bg-gradient-to-r from-transparent via-cream/15 to-transparent" />
+      <span className="absolute left-1/2 top-1/2 size-1 -translate-x-1/2 -translate-y-1/2 rounded-full bg-gold/50 [box-shadow:0_0_10px_var(--color-gold)]" />
+    </div>
+  );
+}
+
 export function About() {
   return (
     <section
@@ -279,23 +294,34 @@ export function About() {
 
       {/* ════════ ACT 1 · Opening — full-bleed title beat ════════ */}
       <div className="relative flex min-h-svh flex-col items-center justify-center overflow-hidden px-5 py-28 text-center sm:px-8">
-        {/* Parallax pixel-city backdrop, scrimmed almost to black. */}
+        {/* Đông Sơn drum mandala backdrop (about1.png). The art is already a
+            deep navy, so it blends seamlessly into the section's bg-ink. */}
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
         >
           <Image
-            src="/members/place/saigon.png"
+            src="/general/about1.png"
             alt=""
             fill
+            priority
             unoptimized
             sizes="100vw"
-            className="s-bgpar pixelated object-cover opacity-[0.16]"
+            className="object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-ink via-ink/85 to-ink" />
-          <div className="absolute inset-0 [background:radial-gradient(70%_60%_at_50%_45%,transparent,rgba(15,20,32,0.75))]" />
+          {/* Top fades into ink (blends with the hero above). The bottom is the
+              tricky seam: about1's base is near-black (#06121f) but about2's is
+              a lighter navy (#1c2534). Settling to ink-deep here (as before)
+              left a flat near-black trough that then snapped up to navy at the
+              top of Act 2 — the visible band. Instead, ramp the bottom UP to
+              ink-navy over a long stretch so Act 1 arrives at exactly Act 2's
+              base colour and the two fields merge with no kink. */}
+          <div className="absolute inset-0 [background:linear-gradient(to_bottom,var(--color-ink)_0%,transparent_30%,transparent_62%,var(--color-ink-navy)_100%)]" />
+          {/* Soft vignette: keeps the centre mandala + title crisp, tones down
+              the corner topo lines. */}
+          <div className="absolute inset-0 [background:radial-gradient(80%_65%_at_50%_46%,transparent,rgba(15,20,32,0.55))]" />
         </div>
-        <Motes />
+        {/* <Motes /> */}
 
         <span className="s-fade inline-flex items-center gap-2 font-pixel text-sm uppercase tracking-[0.4em] text-gold sm:text-base">
           <span className="h-px w-10 bg-gold/50" />
@@ -322,6 +348,29 @@ export function About() {
 
       {/* ════════ ACT 2 · The dichotomy — giant ≠ beat ════════ */}
       <div className="relative flex min-h-svh flex-col items-center justify-center overflow-hidden px-5 text-center sm:px-8">
+        {/* Đông Sơn cranes + lotus corner frame (about2.png). Deep-navy base
+            blends into bg-ink; the art lives in the corners so the centre
+            stays clear for the headline. */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
+        >
+          <Image
+            src="/general/about2.png"
+            alt=""
+            fill
+            unoptimized
+            sizes="100vw"
+            className="object-cover"
+          />
+          {/* Top is washed with ink-navy — about2's OWN base colour — so it's a
+              no-op visually but pins the seam pixel to exactly the colour Act 1
+              now ramps up to (no dark band). The BOTTOM is left un-faded so
+              about2's artwork runs straight into about3's at the seam — both
+              share the same ink-navy base, so painting a band here would only
+              cut a textureless strip across the continuous art. */}
+          <div className="absolute inset-0 [background:linear-gradient(to_bottom,var(--color-ink-navy)_0%,transparent_10%,transparent_100%)]" />
+        </div>
         <Motes />
         <p className="s-fade font-pixel text-sm uppercase tracking-[0.4em] text-cream/60 sm:text-base">
           Một sự thật chúng tôi nhận ra
@@ -350,6 +399,26 @@ export function About() {
 
       {/* ════════ ACT 3 · The question — pixel-art "window" headline ════════ */}
       <div className="relative flex min-h-svh flex-col items-center justify-center overflow-hidden px-5 text-center sm:px-8">
+        {/* Bronze column frame (about3.png). Deep-navy base blends into the dark
+            beats; the columns run down the left & right edges so the centre
+            stays clear for the headline. */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
+        >
+          <Image
+            src="/general/about3.png"
+            alt=""
+            fill
+            unoptimized
+            sizes="100vw"
+            className="object-cover"
+          />
+          {/* TOP is left un-faded so about3's dark artwork meets about2's
+              directly at the seam (no flat hazy band); bottom fades into ink to
+              meet the bg-ink text beats from Act 4. */}
+          <div className="absolute inset-0 [background:linear-gradient(to_bottom,transparent_0%,transparent_86%,var(--color-ink)_100%)]" />
+        </div>
         <Motes />
         <span
           aria-hidden
@@ -393,6 +462,8 @@ export function About() {
           Internet, chứng kiến thế giới đổi thay từng ngày bởi công nghệ.
         </p>
       </div>
+
+      <ActGap />
 
       {/* ════════ ACT 5 · Inspirations — horizontal pinned scroll ════════ */}
       <div className="h-pin relative">
@@ -476,6 +547,8 @@ export function About() {
         </div>
       </div>
 
+      <ActGap />
+
       {/* ════════ ACT 6 · The path — "bao nhiêu người" scale-up ════════ */}
       <div className="relative flex min-h-svh flex-col items-center justify-center overflow-hidden px-5 text-center sm:px-8">
         <Motes />
@@ -498,6 +571,8 @@ export function About() {
           nhất để tạo ra giá trị thực tế nhất.
         </p>
       </div>
+
+      <ActGap />
 
       {/* ════════ ACT 7 · Who we serve — one journey, many links ════════ */}
       <div className="mx-auto max-w-6xl px-5 py-24 sm:px-8 sm:py-28">
@@ -541,6 +616,8 @@ export function About() {
           những giải pháp tốt không nên chỉ dành cho số ít.
         </p>
       </div>
+
+      <ActGap />
 
       {/* ════════ ACT 8 · What makes us different — "cam kết thì không" ════════ */}
       <div className="relative flex min-h-svh flex-col items-center justify-center overflow-hidden px-5 text-center sm:px-8">
@@ -613,6 +690,8 @@ export function About() {
           ))}
         </div>
       </div>
+
+      <ActGap />
 
       {/* ════════ ACT 10 · The 10-year vision + finale ════════ */}
       <div className="relative flex min-h-svh flex-col items-center justify-center overflow-hidden px-5 py-28 text-center sm:px-8">

@@ -11,6 +11,12 @@
   --color-parchment: #f3e4c1;
   --color-ink: #1b2433;
   --color-ink-soft: #46506a;
+  /* Two navies sampled from the about-section backdrop art. `ink-deep` is the
+     near-black base of about1.png; `ink-navy` is the lighter base shared by
+     about2/about3.png. Backdrop gradients fade to whichever one matches the
+     neighbouring art so seams stay continuous instead of flashing a band. */
+  --color-ink-deep: #06111f;
+  --color-ink-navy: #1c2534;
   --color-terracotta: #c47a55;
   --color-clay: #a85d3e;
   --color-lantern: #d8443a;
