@@ -447,7 +447,31 @@ export function About() {
       </div>
 
       {/* ════════ ACT 4 · The name — Vietnam Z-DNA ════════ */}
-      <div className="relative mx-auto max-w-6xl px-5 py-24 sm:px-8 sm:py-32">
+      <div className="relative flex min-h-svh flex-col items-center justify-center overflow-hidden px-5 py-24 text-center sm:px-8 sm:py-32">
+        {/* Pixel Việt Nam skyline + constellation map (about4.png). Its base is
+            ink-navy (#1c2534) — all but identical to the section's bg-ink — so
+            the seams need no heavy banding. The city sits along the bottom edge
+            (object-bottom); the dotted map fills the sky behind the name. */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
+        >
+          <Image
+            src="/general/about4.png"
+            alt=""
+            fill
+            unoptimized
+            sizes="100vw"
+            className="pixelated object-cover object-bottom"
+          />
+          {/* Top fades from ink to meet Act 3's ink bottom; the BOTTOM is left
+              un-faded so the skyline stays crisp and its navy waterline runs
+              straight into the bg-ink gap below (ink ≈ ink-navy). A soft centre
+              scrim lifts the name + body copy off the dotted map lines. */}
+          <div className="absolute inset-0 [background:linear-gradient(to_bottom,var(--color-ink)_0%,transparent_20%,transparent_100%)]" />
+          <div className="absolute inset-0 [background:radial-gradient(55%_38%_at_50%_36%,rgba(15,20,32,0.5)_0%,transparent_70%)]" />
+        </div>
+
         <span className="s-rise block text-center font-pixel text-sm uppercase tracking-[0.4em] text-cream/60">
           Đó cũng là ý nghĩa cái tên
         </span>

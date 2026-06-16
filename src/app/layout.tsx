@@ -48,9 +48,9 @@ const vt323 = VT323({
 });
 
 export const metadata: Metadata = {
-  title: "VNZ — Meet Our Team",
+  title: "VNZ — Vietnam Z-DNA Technology",
   description:
-    "Vietnamese minds, global solutions. Meet the players building great things together.",
+    "VNZ — Vietnam Z-DNA Technology. Một thế hệ người Việt làm chủ công nghệ, tạo ra giá trị và ghi dấu ấn trên bản đồ công nghệ thế giới.",
 };
 
 export default function RootLayout({

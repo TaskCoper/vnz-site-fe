@@ -49,6 +49,19 @@ export function SiteNav() {
     return () => io.disconnect();
   }, []);
 
+  // Reflect the section you're reading in the browser tab title. The static
+  // metadata title (layout.tsx) is only the SSR/first-paint default — it never
+  // changes on its own, which is why the tab stayed frozen on one name. This
+  // swaps document.title live as the scrollspy `active` section changes.
+  useEffect(() => {
+    const labels: Record<string, string> = {
+      ...Object.fromEntries(SECTIONS.map((s) => [s.id, s.label])),
+      top: "Vietnam Z-DNA Technology", // home: show the brand, not "Trang chủ"
+      contact: "Liên hệ",
+    };
+    document.title = `VNZ — ${labels[active] ?? "Vietnam Z-DNA Technology"}`;
+  }, [active]);
+
   const onDark = scrolled || open;
 
   return (
