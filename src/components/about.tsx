@@ -292,84 +292,129 @@ export function About() {
         </div>
       </div>
 
-      {/* ════════ ACT 1 · Opening — full-bleed title beat ════════ */}
-      <div className="relative flex min-h-svh flex-col items-center justify-center overflow-hidden px-5 py-28 text-center sm:px-8">
-        {/* Đông Sơn drum mandala backdrop (about1.png). The art is already a
-            deep navy, so it blends seamlessly into the section's bg-ink. */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
-        >
-          <Image
-            src="/general/about1.png"
-            alt=""
-            fill
-            priority
-            unoptimized
-            sizes="100vw"
-            className="object-cover"
-          />
-          {/* Top fades into ink (blends with the hero above). The bottom is the
-              tricky seam: about1's base is near-black (#06121f) but about2's is
-              a lighter navy (#1c2534). Settling to ink-deep here (as before)
-              left a flat near-black trough that then snapped up to navy at the
-              top of Act 2 — the visible band. Instead, ramp the bottom UP to
-              ink-navy over a long stretch so Act 1 arrives at exactly Act 2's
-              base colour and the two fields merge with no kink. */}
-          <div className="absolute inset-0 [background:linear-gradient(to_bottom,var(--color-ink)_0%,transparent_30%,transparent_62%,var(--color-ink-navy)_100%)]" />
-          {/* Soft vignette: keeps the centre mandala + title crisp, tones down
-              the corner topo lines. */}
-          <div className="absolute inset-0 [background:radial-gradient(80%_65%_at_50%_46%,transparent,rgba(15,20,32,0.55))]" />
-        </div>
-        {/* <Motes /> */}
+      {/* ════════ ACT 1 · Opening — pinned scroll-scrub ════════
+          The Đông Sơn drum medallion appears alone; as you scroll it slowly
+          rotates, then the chapter label, title and body copy reveal in
+          sequence. The pin + scrub live in `.a1-*` (globals.css); the static
+          fallback (no scroll-timeline / reduced-motion) is a normal centred
+          hero with the drum still and every line visible. */}
+      <div className="a1-pin relative">
+        <div className="a1-sticky relative flex min-h-svh flex-col items-center justify-center overflow-hidden px-5 py-28 text-center sm:px-8">
+          {/* Đông Sơn drum medallion (the single cutout in /general/about1/)
+              centred as a dim emblem over a flat #0D1624 field — Act 1's own
+              near-black base, darker than Act 2's ink-navy. The inner .a1-spin
+              layer carries the scroll-scrubbed rotation; the wrapper keeps the
+              centring + opacity so the two transforms don't fight. */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0 -z-10 overflow-hidden bg-[#0D1624]"
+          >
+            <div className="absolute left-1/2 top-1/2 size-[min(90vh,94vw,880px)] -translate-x-1/2 -translate-y-1/2 opacity-40">
+              <div className="a1-spin relative size-full">
+                <Image
+                  src="/general/about1/drum.png"
+                  alt=""
+                  fill
+                  priority
+                  unoptimized
+                  sizes="(max-width:640px) 94vw, 70vh"
+                  className="object-contain"
+                />
+              </div>
+            </div>
+            {/* Top fades into ink (blends with the hero above, whose own base
+                settles to ink). The bottom ramps UP to ink-navy so Act 1
+                arrives at exactly Act 2's base colour and the two fields merge
+                with no kink (the flat #0D1624 between is darker than both,
+                reading as a natural opening vignette). */}
+            <div className="absolute inset-0 [background:linear-gradient(to_bottom,var(--color-ink)_0%,transparent_30%,transparent_62%,var(--color-ink-navy)_100%)]" />
+            {/* Soft vignette: keeps the centre medallion + title crisp, tones
+                down the corner edges. */}
+            <div className="absolute inset-0 [background:radial-gradient(80%_65%_at_50%_46%,transparent,rgba(13,22,36,0.55))]" />
+          </div>
+          {/* <Motes /> */}
 
-        <span className="s-fade inline-flex items-center gap-2 font-pixel text-sm uppercase tracking-[0.4em] text-gold sm:text-base">
-          <span className="h-px w-10 bg-gold/50" />
-          Chương 01 · Câu chuyện VNZ
-          <span className="h-px w-10 bg-gold/50" />
-        </span>
-        <h2 className="s-rise mt-8 font-pixel text-[clamp(2.75rem,10vw,9.5rem)] uppercase leading-[0.82] text-cream [text-shadow:0_4px_40px_rgba(0,0,0,0.6)]">
-          Khởi nguồn
-          <br />
-          từ một <span className="text-gold">câu hỏi</span>
-        </h2>
-        <p className="s-fade mt-9 max-w-2xl font-viet text-base font-light leading-relaxed text-cream/70 sm:text-lg">
-          Khi nhắc đến công nghệ Việt Nam, người ta tự hào về những kỹ sư giỏi —
-          những con người âm thầm đứng sau hàng nghìn sản phẩm quốc tế. Nhưng
-          càng quan sát thế giới, chúng tôi càng nhận ra một sự thật.
-        </p>
-        <span
-          aria-hidden
-          className="animate-float absolute bottom-8 left-1/2 -translate-x-1/2 font-pixel text-2xl text-cream/55"
-        >
-          ▾
-        </span>
+          <span className="a1-eyebrow inline-flex items-center gap-2 font-pixel text-sm uppercase tracking-[0.4em] text-gold sm:text-base">
+            <span className="h-px w-10 bg-gold/50" />
+            Chương 01 · Câu chuyện VNZ
+            <span className="h-px w-10 bg-gold/50" />
+          </span>
+          <h2 className="a1-title mt-8 font-pixel text-[clamp(2.75rem,10vw,9.5rem)] uppercase leading-[0.82] text-cream [text-shadow:0_4px_40px_rgba(0,0,0,0.6)]">
+            Khởi nguồn
+            <br />
+            từ một <span className="text-gold">câu hỏi</span>
+          </h2>
+          <p className="a1-copy mt-9 max-w-2xl font-viet text-base font-light leading-relaxed text-cream/70 sm:text-lg">
+            Khi nhắc đến công nghệ Việt Nam, người ta tự hào về những kỹ sư giỏi
+            — những con người âm thầm đứng sau hàng nghìn sản phẩm quốc tế.
+            Nhưng càng quan sát thế giới, chúng tôi càng nhận ra một sự thật.
+          </p>
+          <span
+            aria-hidden
+            className="animate-float absolute bottom-8 left-1/2 -translate-x-1/2 font-pixel text-2xl text-cream/55"
+          >
+            ▾
+          </span>
+        </div>
       </div>
 
       {/* ════════ ACT 2 · The dichotomy — giant ≠ beat ════════ */}
       <div className="relative flex min-h-svh flex-col items-center justify-center overflow-hidden px-5 text-center sm:px-8">
-        {/* Đông Sơn cranes + lotus corner frame (about2.png). Deep-navy base
-            blends into bg-ink; the art lives in the corners so the centre
-            stays clear for the headline. */}
+        {/* Đông Sơn cranes + lotus corner frame, composed from the individual
+            cutouts in /general/about2/ over a flat ink-navy (#1c2534) field.
+            The cranes (bird.png) sit in the top corners, the lotus clusters
+            (lotus.png) in the bottom corners; all boxes hug the left/right
+            edges (left-0 / right-0). bird.png's beak points left by nature, so
+            to make the two cranes face EACH OTHER the LEFT one is mirrored
+            (-scale-x-100 → beak toward centre) and the right one stays natural;
+            lotus.png is a left corner piece, so its right copy is mirrored.
+            The art lives in the corners so the centre stays clear for the
+            headline, and the solid ink-navy base meets Act 1 / Act 3 cleanly
+            (both neighbours ramp to/from that same colour). */}
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
+          className="pointer-events-none absolute inset-0 -z-10 overflow-hidden bg-ink-navy"
         >
-          <Image
-            src="/general/about2.png"
-            alt=""
-            fill
-            unoptimized
-            sizes="100vw"
-            className="object-cover"
-          />
-          {/* Top is washed with ink-navy — about2's OWN base colour — so it's a
-              no-op visually but pins the seam pixel to exactly the colour Act 1
-              now ramps up to (no dark band). The BOTTOM is left un-faded so
-              about2's artwork runs straight into about3's at the seam — both
-              share the same ink-navy base, so painting a band here would only
-              cut a textureless strip across the continuous art. */}
-          <div className="absolute inset-0 [background:linear-gradient(to_bottom,var(--color-ink-navy)_0%,transparent_10%,transparent_100%)]" />
+          {/* <div className="absolute left-0 top-0 aspect-[1216/1014] w-[min(32vw,355px)] -scale-x-100">
+            <Image
+              src="/general/about2/bird.png"
+              alt=""
+              fill
+              unoptimized
+              sizes="32vw"
+              className="object-contain"
+            />
+          </div>
+          <div className="absolute right-0 top-0 aspect-[1216/1014] w-[min(32vw,355px)]">
+            <Image
+              src="/general/about2/bird.png"
+              alt=""
+              fill
+              unoptimized
+              sizes="32vw"
+              className="object-contain"
+            />
+          </div> */}
+          <div className="absolute bottom-0 left-0 aspect-[1159/1010] w-[min(36vw,415px)]">
+            <Image
+              src="/general/about2/lotus.png"
+              alt=""
+              fill
+              unoptimized
+              sizes="36vw"
+              className="object-contain"
+            />
+          </div>
+          <div className="absolute bottom-0 right-0 aspect-[1159/1010] w-[min(36vw,415px)] -scale-x-100">
+            <Image
+              src="/general/about2/lotus.png"
+              alt=""
+              fill
+              unoptimized
+              sizes="36vw"
+              className="object-contain"
+            />
+          </div>
         </div>
         <Motes />
         <p className="s-fade font-pixel text-sm uppercase tracking-[0.4em] text-cream/60 sm:text-base">
@@ -399,25 +444,38 @@ export function About() {
 
       {/* ════════ ACT 3 · The question — pixel-art "window" headline ════════ */}
       <div className="relative flex min-h-svh flex-col items-center justify-center overflow-hidden px-5 text-center sm:px-8">
-        {/* Bronze column frame (about3.png). Deep-navy base blends into the dark
-            beats; the columns run down the left & right edges so the centre
-            stays clear for the headline. */}
+        {/* Bronze column frame, composed from the single cutout in
+            /general/about3/ over a flat ink-navy (#1c2534) field — the same
+            base Act 2 / Act 4 use, so the seams need no banding. column.png's
+            cloud capital fans to the RIGHT by nature, so the LEFT column stays
+            natural (clouds toward centre) and the right one is mirrored
+            (-scale-x-100). Each runs the full height down its edge (h-full,
+            anchored top/bottom flush) so the centre stays clear for the
+            headline; on mobile they shrink to a capped width to free the text. */}
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
+          className="pointer-events-none absolute inset-0 -z-10 overflow-hidden bg-ink-navy"
         >
-          <Image
-            src="/general/about3.png"
-            alt=""
-            fill
-            unoptimized
-            sizes="100vw"
-            className="object-cover"
-          />
-          {/* TOP is left un-faded so about3's dark artwork meets about2's
-              directly at the seam (no flat hazy band); bottom fades into ink to
-              meet the bg-ink text beats from Act 4. */}
-          <div className="absolute inset-0 [background:linear-gradient(to_bottom,transparent_0%,transparent_86%,var(--color-ink)_100%)]" />
+          <div className="absolute -left-[7%] top-0 aspect-[739/1495] h-full max-sm:h-auto max-sm:w-[30vw]">
+            <Image
+              src="/general/about3/column.png"
+              alt=""
+              fill
+              unoptimized
+              sizes="(max-width:640px) 30vw, 30vw"
+              className="object-contain object-left-top"
+            />
+          </div>
+          <div className="absolute -right-[7%] top-0 aspect-[739/1495] h-full max-sm:h-auto max-sm:w-[30vw] -scale-x-100">
+            <Image
+              src="/general/about3/column.png"
+              alt=""
+              fill
+              unoptimized
+              sizes="(max-width:640px) 30vw, 30vw"
+              className="object-contain object-left-top"
+            />
+          </div>
         </div>
         <Motes />
         <span
@@ -433,43 +491,51 @@ export function About() {
           <span className="s-fade block text-[clamp(1.75rem,5.5vw,4.5rem)]">
             xây dựng công nghệ cho thế giới —
           </span>
-          <span
-            className="clip-art mt-4 block text-[clamp(2.5rem,9.5vw,9rem)] leading-[0.85]"
-            style={{ ["--clip-img" as string]: SAIGON }}
-          >
+          <span className="s-fade mt-4 block text-[clamp(2.5rem,9.5vw,9rem)] leading-[0.85] text-gold [text-shadow:0_3px_0_rgba(0,0,0,0.35),0_0_42px_rgba(240,179,74,0.4)]">
             tại sao chưa có dấu ấn{" "}
             <span className="whitespace-nowrap">Việt Nam?</span>
           </span>
         </p>
-        <p className="s-fade mt-12 font-pixel text-sm uppercase tracking-[0.4em] text-cream/65">
+        <p className="s-fade mt-12 font-pixel text-sm uppercase tracking-[0.35em] text-gold/90">
           Đó là điều đã thôi thúc VNZ ra đời
         </p>
       </div>
 
       {/* ════════ ACT 4 · The name — Vietnam Z-DNA ════════ */}
       <div className="relative flex min-h-svh flex-col items-center justify-center overflow-hidden px-5 py-24 text-center sm:px-8 sm:py-32">
-        {/* Pixel Việt Nam skyline + constellation map (about4.png). Its base is
-            ink-navy (#1c2534) — all but identical to the section's bg-ink — so
-            the seams need no heavy banding. The city sits along the bottom edge
-            (object-bottom); the dotted map fills the sky behind the name. */}
+        {/* Việt Nam constellation map + gold skyline, composed from the
+            individual cutouts in /general/about4/ over a flat ink-navy
+            (#1c2534) field — the same base Act 3 uses, so the top seam needs no
+            banding. vietnam.png (the dotted map) sits centred behind the name;
+            city.png (the skyline) runs full-width along the bottom edge,
+            layered in front of the map's lower tail. The waterline meets the
+            bg-ink gap below (ink ≈ ink-navy). A soft centre scrim lifts the
+            name + body copy off the dotted map lines. */}
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
+          className="pointer-events-none absolute inset-0 -z-10 overflow-hidden bg-ink-navy"
         >
-          <Image
-            src="/general/about4.png"
-            alt=""
-            fill
-            unoptimized
-            sizes="100vw"
-            className="pixelated object-cover object-bottom"
-          />
-          {/* Top fades from ink to meet Act 3's ink bottom; the BOTTOM is left
-              un-faded so the skyline stays crisp and its navy waterline runs
-              straight into the bg-ink gap below (ink ≈ ink-navy). A soft centre
-              scrim lifts the name + body copy off the dotted map lines. */}
-          <div className="absolute inset-0 [background:linear-gradient(to_bottom,var(--color-ink)_0%,transparent_20%,transparent_100%)]" />
-          <div className="absolute inset-0 [background:radial-gradient(55%_38%_at_50%_36%,rgba(15,20,32,0.5)_0%,transparent_70%)]" />
+          <div className="absolute left-1/2 top-[5%] aspect-[962/1377] h-[58%] -translate-x-1/2 opacity-90">
+            <Image
+              src="/general/about4/vietnam.png"
+              alt=""
+              fill
+              unoptimized
+              sizes="(max-width:640px) 50vw, 28vw"
+              className="object-contain"
+            />
+          </div>
+          <div className="absolute bottom-0 left-0 aspect-[2138/589] w-full">
+            <Image
+              src="/general/about4/city.png"
+              alt=""
+              fill
+              unoptimized
+              sizes="100vw"
+              className="object-contain object-bottom"
+            />
+          </div>
+          <div className="absolute inset-0 [background:radial-gradient(60%_42%_at_50%_46%,rgba(15,20,32,0.62)_0%,transparent_72%)]" />
         </div>
 
         <span className="s-rise block text-center font-pixel text-sm uppercase tracking-[0.4em] text-cream/60">
