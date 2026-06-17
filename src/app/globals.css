@@ -48,6 +48,18 @@
   --animate-pulse-glow: pulse-glow 3.2s ease-in-out infinite;
 }
 
+/* Product brand accents — each product's own logo color, consumed as its
+   `--tint` across the Sản phẩm showcase (logo glow, headline, stat bars, CTA).
+   Cool hues by design: they read like glowing screens against the warm ink
+   section. `violet` = StylaiBox wordmark purple; `azure` = TaskCoper icon blue.
+   These live in :root rather than @theme on purpose — they're referenced ONLY
+   via raw var() (never a `text-violet`/`bg-azure` utility), and Tailwind v4
+   tree-shakes @theme tokens it sees no utility usage for, which would drop them. */
+:root {
+  --color-violet: #8b6cf2;
+  --color-azure: #3a8ef0;
+}
+
 @keyframes bob {
   0%,
   100% {

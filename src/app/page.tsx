@@ -2,6 +2,7 @@ import { SiteNav } from "@/components/site-nav";
 import { Hero } from "@/components/hero";
 import { About } from "@/components/about";
 import { Member } from "@/components/member";
+import { Products } from "@/components/products";
 import { SectionStub } from "@/components/section-stub";
 import { SiteFooter } from "@/components/site-footer";
 
@@ -17,14 +18,8 @@ export default function Home() {
         <About />
         {/* 3 · Đội ngũ — full-screen character viewer */}
         <Member />
-        {/* 4 · Sản phẩm — placeholder until real content lands */}
-        <SectionStub
-          id="products"
-          kicker="Sản phẩm · Products"
-          title="Những dấu ấn công nghệ"
-          blurb="Các sản phẩm và nền tảng do VNZ xây dựng — từ trí tuệ Việt Nam, giải quyết những bài toán thực tiễn của xã hội."
-          tint="var(--color-sunset)"
-        />
+        {/* 4 · Sản phẩm — product showcase (StylaiBox, TaskCoper) */}
+        <Products />
         {/* 5 · Đối tác — placeholder */}
         <SectionStub
           id="partners"
