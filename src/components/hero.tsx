@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { GridDistortionBg } from "@/components/bits/grid-distortion-bg";
 
 /**
  * Hero #1 — the cinematic "title screen". A pixel Vietnamese lakeside at sunset,
@@ -26,15 +26,21 @@ export function Hero() {
       id="top"
       className="relative isolate flex min-h-svh w-full flex-col overflow-hidden"
     >
-      {/* Pixel cityscape backdrop */}
-      <Image
-        src="/general/hero.png"
+      {/* Pixel cityscape backdrop, rendered through GridDistortion so the water
+          and skyline ripple away from the cursor. The bit covers rather than
+          stretches (see the note in `GridDistortion.tsx`), so it fills the hero
+          at any viewport the way `object-cover` used to. Under reduced motion the
+          wrapper falls back to a plain <img> — this image IS the hero, so it can
+          never simply disappear. */}
+      <GridDistortionBg
+        imageSrc="/general/hero.png"
         alt="Thành phố ven hồ Việt Nam phong cách pixel lúc hoàng hôn"
-        fill
-        priority
-        unoptimized
-        sizes="100vw"
-        className="pixelated -z-30 scale-105 object-cover object-bottom"
+        className="-z-30"
+        imgClassName="object-cover object-bottom"
+        grid={130}
+        mouse={0.1}
+        strength={0.13}
+        relaxation={0.92}
       />
 
       {/* ── Atmosphere: dual scrim · vignette · scanlines ── */}
@@ -115,14 +121,16 @@ export function Hero() {
           className="animate-hero-rise mt-9 flex flex-col items-center gap-4 sm:flex-row"
           style={{ animationDelay: "0.32s" }}
         >
+          {/* Primary CTA enters the story at Chương 01; secondary jumps straight
+              to the open roles. */}
           <a
-            href="#about"
+            href="#story"
             className="btn-pixel font-pixel inline-flex items-center gap-2 px-7 py-3 text-lg uppercase tracking-wider"
           >
             Khám phá VNZ <span aria-hidden>▸</span>
           </a>
           <a
-            href="#careers"
+            href="/tuyen-dung"
             className="font-pixel inline-flex items-center gap-2 border-2 border-cream/40 px-7 py-3 text-lg uppercase tracking-wider text-cream transition-colors duration-200 hover:border-ember hover:bg-cream/5 hover:text-ember"
           >
             Gia nhập đội ngũ
@@ -144,7 +152,7 @@ export function Hero() {
 
       {/* Scroll cue */}
       <a
-        href="#about"
+        href="#story"
         aria-label="Cuộn để khám phá"
         className="absolute bottom-5 left-1/2 z-10 flex -translate-x-1/2 flex-col items-center gap-1 font-pixel text-xs uppercase tracking-[0.3em] text-cream/60 transition-colors hover:text-ember"
       >

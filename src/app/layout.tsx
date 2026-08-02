@@ -7,6 +7,7 @@ import {
   VT323,
 } from "next/font/google";
 import "./globals.css";
+import { CursorProvider } from "@/components/bits/cursor-provider";
 
 const pixelify = Pixelify_Sans({
   variable: "--font-pixelify",
@@ -63,7 +64,12 @@ export default function RootLayout({
       lang="en"
       className={`${pixelify.variable} ${silkscreen.variable} ${geistMono.variable} ${beVietnam.variable} ${vt323.variable} h-full antialiased`}
     >
-      <body className="min-h-full bg-ink font-mono text-cream">{children}</body>
+      <body className="min-h-full bg-ink font-mono text-cream">
+        {/* Site-wide, so the custom pointer survives navigation between the
+            homepage and `/doi-ngu` / `/tuyen-dung`. Mounting it per-page would
+            drop and re-mount the follower on every route change. */}
+        <CursorProvider>{children}</CursorProvider>
+      </body>
     </html>
   );
 }

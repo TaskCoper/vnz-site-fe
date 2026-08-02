@@ -9,14 +9,16 @@
   --color-sky: #f7e8c6;
   --color-cream: #fbf4e2;
   --color-parchment: #f3e4c1;
-  --color-ink: #1b2433;
-  --color-ink-soft: #46506a;
-  /* Two navies sampled from the about-section backdrop art. `ink-deep` is the
-     near-black base of about1.png; `ink-navy` is the lighter base shared by
-     about2/about3.png. Backdrop gradients fade to whichever one matches the
-     neighbouring art so seams stay continuous instead of flashing a band. */
-  --color-ink-deep: #06111f;
-  --color-ink-navy: #1c2534;
+  /* Darks are NEUTRAL BLACK, not navy.
+     These were originally blue-tinted (#1b2433 / #46506a / #06111f / #1c2534),
+     sampled from the old backdrop art. Against the warm cream surfaces and the
+     ember accent, that blue read as a second competing hue — so every dark has
+     been stripped back to a neutral greyscale ramp. Keep it that way: if a new
+     dark is needed, take it from this ramp rather than sampling a tint. */
+  --color-ink: #15161a; /* body text + the dark page base */
+  --color-ink-soft: #585c63; /* muted copy on light surfaces */
+  --color-ink-deep: #0a0b0d; /* deepest black — footer, deep bands */
+  --color-ink-navy: #1c1d21; /* raised dark panel (name kept for compatibility) */
   --color-terracotta: #c47a55;
   --color-clay: #a85d3e;
   --color-lantern: #d8443a;
@@ -217,20 +219,179 @@
 }
 
 /* Smooth anchor scrolling, offset so the fixed nav never covers a section top.
-   `scroll-snap-type: y proximity` turns the page into a gentle "full-page" snap:
-   each top-level <section> (tagged `scroll-snap-align: start`) pulls to the top
-   when the scroll settles nearby — but `proximity` (not `mandatory`) means the
-   tall Giới-thiệu section, and any free-scroll between snap points, never trap
-   the user. The dark `bg-ink` seams hide the 4.5rem nav offset above a snap. */
+
+   SCROLLING IS NATIVE — no `scroll-snap-type`, and no JS pager either. Both have
+   been tried and removed. Snap (`y proximity`, every `main > section` a target)
+   let the browser silently re-aim the page whenever scrolling settled near a
+   section top: momentum got swallowed and the page drifted on its own after the
+   user stopped. The JS pager that replaced it was rejected too. Plain momentum
+   scrolling is the intended feel — don't reintroduce either. */
 html {
   scroll-behavior: smooth;
   scroll-padding-top: 4.5rem;
-  scroll-snap-type: y proximity;
 }
-/* Top-level page sections (+ the footer) are the snap targets. */
-main > section,
-footer {
+
+/* ── Page scrollbar ──────────────────────────────────────────────────────────
+   Themed to match `.btn-pixel` rather than the OS: square corners, a hard ink
+   track and an ember thumb with a chunky ink outline, so it reads as one more
+   16-bit UI part instead of a rounded system widget.
+
+   Ink track, not a transparent one, ON PURPOSE. The page runs dark → ivory →
+   dark, and the bar spans all of it — a track that inherits the page would
+   change colour halfway down and the thumb would lose contrast against the
+   ivory chapters. A constant dark rail keeps the ember legible the whole way.
+
+   Both syntaxes are here because they are not interchangeable: `scrollbar-color`
+   / `scrollbar-width` is the standard (Firefox), `::-webkit-scrollbar` is what
+   Chrome and Safari actually read. Neither alone covers the browsers this site
+   targets. `scrollbar-width: auto` is deliberate — `thin` in Firefox is much
+   narrower than the 14px webkit bar and the two would not match.
+
+   Scoped to `html`, so the `scrollbar-width: none` on `.hstrip` and
+   `.h-pin-track` still wins for the horizontal strips that hide theirs. */
+html {
+  scrollbar-width: auto;
+  scrollbar-color: var(--color-ember) #0a0b0d;
+}
+::-webkit-scrollbar {
+  width: 14px;
+  height: 14px;
+}
+::-webkit-scrollbar-track {
+  background: #0a0b0d;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-ember);
+  border: 3px solid #0a0b0d;
+  border-radius: 0;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-sunset);
+}
+::-webkit-scrollbar-corner {
+  background: #0a0b0d;
+}
+
+/* THESE TWO LIVE IN `@layer components` ON PURPOSE — see the note inside.
+   Everything else at this level of the file is unlayered, which is fine for rules
+   nothing needs to override. These two are backgrounds that utilities DO need to
+   override, and unlayered CSS beats every layer including Tailwind's utilities. */
+@layer components {
+/* Paper surface — the LIGHT ground, ivory (#fbf4e2, the `cream` palette token).
+   It covers only Dấu ấn VNZ through Tầm nhìn; the hero and the Câu chuyện
+   act set `bg-ink` explicitly and are not on this surface, so the page reads
+   dark → ivory → dark from top to bottom.
+
+   The colour has moved a lot: cream, then #fff while everything was light, then
+   ink for the all-dark pass, then ivory (#fbf4e2) because pure white glared
+   between two black neighbours. It is now a PAPER white — still warm, but with
+   the yellow pulled most of the way out (#fbf4e2 spans 25 points from red to
+   blue; this spans 7). Pure #fff is still wrong here: the fibre texture below
+   needs something to sit in, and white between two ink chapters glares.
+   Don't reach for a blend mode: the tooth below is DARK speckle, which darkens
+   correctly on a light ground and only needed `screen` while this was ink.
+
+   The tooth is a tileable fractal-noise SVG carried as a data URI in
+   `background-image`, layered over the colour on the SAME element rather than an
+   ::after overlay — no extra node, no stacking-context fight with the sections'
+   `isolate` + z-indexed art, and nothing to forget to make `pointer-events-none`.
+   Keep the speckle alpha low (0.055): anything heavier stops reading as fibre and
+   starts reading as compression noise. */
+.paper {
+  background-color: #f8f6f1;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23p)' opacity='0.055'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+}
+/* Raised panel on the paper ground — a shade lighter than it, so cards separate
+   without a heavy border. Tracks `.paper`: it has to stay brighter than the
+   ground by a hair, so if that colour moves, move this one with it.
+
+   SAME FIBRE AS THE GROUND. A flat panel on a textured ground reads as a smooth
+   sticker rather than as a raised piece of the same paper — the eye catches the
+   edge even when the two colours are a hair apart, which is exactly what gave the
+   partner logos their ghost rectangles. Anything light and sizeable on this page
+   should carry the tooth; the alpha is a touch lower than `.paper` because the
+   panel is brighter and the same speckle reads heavier on it. */
+.paper-card {
+  background-color: #fffefb;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23p)' opacity='0.045'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+}
+/* WHY THE LAYER. Both rules set `background-color`, and both are meant to be a
+   DEFAULT that a utility can override — `paper-card` + `hover:bg-ember` on the
+   dither button being the case that exposed it. Unlayered, they outrank every
+   Tailwind utility no matter how specific, so the hover background silently never
+   applied: the fill stayed near-white while `hover:text-cream` turned the label
+   cream, and the text vanished into the button. Inside `components` the normal
+   mental model holds — utilities win. Any new surface class belongs in here too. */
+}
+
+/* Tint used as TEXT on the ivory surface.
+   The raw `--tint` values in members.ts / products.ts / careers.ts were picked
+   against a DARK ground: gold (#f0b34a) measures 1.87:1 on ivory, lotus and azure
+   are not much better. Mixing the tint into ink keeps every member and product
+   individually identifiable while clearing readable contrast, so the `--tint`
+   theming hook survives the light chapters instead of being thrown away.
+   Use raw `text-[color:var(--tint)]` ONLY on the dark art stages. */
+.tint-text {
+  color: color-mix(in oklab, var(--tint) 62%, var(--color-ink));
+}
+
+/* Plain horizontal scroll strip — drag/swipe/shift-wheel, no scroll-timeline.
+   MUST NOT be confused with `.h-pin-track`: that one is only valid INSIDE a
+   `.h-pin` ancestor, because under `@supports (animation-timeline: scroll())` it
+   is given `overflow: visible` and an `animation-timeline: --hpin` supplied by
+   `.h-pin`. Used standalone it silently becomes unscrollable — the track keeps
+   `width: max-content`, loses its overflow, and freezes at whatever transform the
+   missing timeline resolves to, so every panel past the first screen is stranded
+   off-viewport with no way to reach it. Use `.hstrip` for a strip that is not
+   pinned. */
+.hstrip {
+  display: flex;
+  gap: 1.25rem;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+  padding-inline: 1.25rem;
+}
+.hstrip::-webkit-scrollbar {
+  display: none;
+}
+.hstrip > * {
   scroll-snap-align: start;
+}
+
+/* Marquee — an endlessly drifting horizontal band, used for the Đối tác row.
+   The track holds the item list TWICE and translates by exactly -50%, so the
+   second copy is mid-stride where the first began and the loop has no visible
+   seam. Duplicate the list or the belt will jump; the second copy must be
+   `aria-hidden` so the marks aren't announced twice.
+   Hovering pauses it — a moving row you can't read is a tease, not a feature. */
+.marquee {
+  overflow: hidden;
+  /* Fade both ends so items enter and leave instead of being cut by a hard edge. */
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    black 8%,
+    black 92%,
+    transparent
+  );
+}
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marquee var(--marquee-duration, 42s) linear infinite;
+}
+.marquee:hover .marquee-track,
+.marquee:focus-within .marquee-track {
+  animation-play-state: paused;
+}
+@keyframes marquee {
+  to {
+    transform: translateX(-50%);
+  }
 }
 
 /* Crisp pixel scaling for all art assets. */
@@ -321,8 +482,15 @@ footer {
       0 0 0 3px var(--color-ink),
       0 0 0 6px var(--color-cream),
       6px 6px 0 6px rgba(15, 20, 32, 0.45);
+    /* TRANSFORM IS DELIBERATELY NOT TRANSITIONED. A transition applies to EVERY
+       transform change, not just the `:active` press — including the per-frame
+       writes of a scrubbed GSAP tween. Both CTAs in the Dấu ấn act carry this
+       class, and both were the ONLY part of their product that visibly ratcheted
+       while sliding in: each frame's new position was being quantised into two
+       80ms steps behind GSAP's back. `steps(2)` over 80ms is ~2 frames, so the
+       press loses nothing perceptible by snapping, and box-shadow still carries
+       the stepped feel. */
     transition:
-      transform 0.08s steps(2),
       box-shadow 0.08s steps(2),
       background 0.15s;
   }
@@ -341,7 +509,6 @@ footer {
       0 0 0 6px var(--color-cream),
       2px 2px 0 6px rgba(15, 20, 32, 0.45);
   }
-
   /* NES-style segmented stat bar. Fill width is driven by --val and only
      expands once the card scrolls into view (.is-visible). */
   .statbar {
@@ -373,6 +540,33 @@ footer {
   }
   .is-visible .statbar > .fill {
     width: var(--val, 0%);
+  }
+
+  /* Scroll-scrubbed variant of the stat bar, for the server-rendered story
+     sections. The `.is-visible` fill above needs a client component to toggle
+     that class; `.is-scrub` instead takes its final width as the DEFAULT and
+     (where supported) scrubs 0 → --val as the bar enters view. Engines without
+     scroll-timeline support — and reduced-motion users — get the finished bar. */
+  .statbar.is-scrub {
+    /* Neutral-black track. The base `.statbar` above is still blue-tinted
+       (#11182a) from the old navy artwork; against the warm cream + ember
+       surfaces that blue reads as a second competing hue, so this variant takes
+       its track from the neutral dark ramp instead. */
+    background: #14151a;
+    box-shadow:
+      inset 0 0 0 2px #000,
+      inset 0 0 0 3px #33353c;
+  }
+  .statbar.is-scrub > .fill {
+    width: var(--val, 0%);
+  }
+  @supports (animation-timeline: view()) {
+    .statbar.is-scrub > .fill {
+      transition: none;
+      animation: bar-fill linear both;
+      animation-timeline: view();
+      animation-range: entry 15% cover 38%;
+    }
   }
 
   /* Subtle CRT scanline overlay. */
@@ -520,15 +714,6 @@ footer {
     animation-range: cover 0% cover 100%;
   }
 
-  /* Vertical reading-progress rail — fills as the section travels past.
-     Consumes the `--about` view-timeline declared on the section itself. */
-  .s-progress {
-    transform: scaleY(0);
-    transform-origin: top;
-    animation: s-progress linear both;
-    animation-timeline: --about;
-    animation-range: entry 55% exit 5%;
-  }
 }
 
 @keyframes s-rise {
@@ -599,9 +784,12 @@ footer {
     transform: translateY(-38px);
   }
 }
-@keyframes s-progress {
+@keyframes bar-fill {
+  from {
+    width: 0;
+  }
   to {
-    transform: scaleY(1);
+    width: var(--val, 0%);
   }
 }
 
@@ -657,54 +845,93 @@ footer {
   }
 }
 
-/* Act 1 opening — pinned scroll-scrub. The Đông Sơn drum medallion appears
-   alone; as you scroll it slowly rotates, then the chapter label, title and
-   body copy reveal in sequence. The scrub runs across the `contain` phase (the
-   pinned stretch). DEFAULT (no scroll-timeline / reduced-motion) collapses to a
-   normal centred hero with the drum static and every line already visible. */
-@supports (animation-timeline: scroll()) {
-  .a1-pin {
-    height: 190svh;
-    view-timeline-name: --act1;
+/* ── Team strip inside the Dấu ấn act ──────────────────────────────────────────
+   The same trick as `.h-pin`, borrowed for a strip that lives inside a GSAP act.
+
+   WHY NOT GSAP FOR THIS. The act's other phases are scrubbed by ScrollTrigger,
+   which runs on the MAIN THREAD: it listens for scroll, lerps, and writes styles
+   every frame. That is fine for a handful of fades, but a wide strip of member
+   cards stutters under it the moment anything else competes for the thread — and
+   this page has a WebGL hero, a spark canvas and a custom cursor competing.
+   `animation-timeline` is evaluated by the compositor instead, so the strip keeps
+   moving at display rate no matter how busy JS is. It is why the original site's
+   "dấu ấn chúng tôi ngưỡng mộ" rail feels the way it does.
+
+   `--pact` is published by the act wrapper (`.p-act`). The RANGE is hand-matched
+   to the GSAP timeline: the strip travels over the stretch that starts once the
+   team panel has finished arriving. Retune both together — the numbers in
+   `products-act.tsx` and the percentages here are a pair.
+
+   Progressive enhancement, exactly like `.h-pin`: without scroll-timeline support
+   the strip stays a normal swipeable `.hstrip` and nothing is lost. */
+@supports (animation-timeline: view()) {
+  .p-act {
+    view-timeline-name: --pact;
     view-timeline-axis: block;
   }
-  .a1-sticky {
-    position: sticky;
-    top: 0;
-    height: 100svh;
-    overflow: hidden;
+  .p-strip {
+    /* THE ROW STARTS FROM THE MIDDLE, NOT FROM THE LEFT EDGE. At rest the strip
+       used to sit at translate 0, which put card one flush against the left of
+       the screen the moment the panel arrived — it read as a row already
+       half-scrolled rather than as a row about to be scrolled. The keyframe's
+       `from` now parks card ONE in the centre of the viewport, and `both` holds
+       that pose for the whole act before the range opens.
+       CSS cannot measure a card, so these two mirror the markup BY HAND:
+       `--card-w` is `w-[15rem] sm:w-[17rem]` in `team.tsx`, `--strip-pad` is
+       `.hstrip`'s own `padding-inline`. Change either there and change it here. */
+    --card-w: 15rem;
+    --strip-pad: 1.25rem;
+    width: max-content;
+    overflow: visible;
+    animation: p-strip-track linear both;
+    animation-timeline: --pact;
+    /* RANGE = SPEED. This is the slice of the act's scroll that the whole
+       sideways travel is squeezed into, so a NARROWER range means a FASTER
+       strip. It was 74%→96% (22% of the act) and read as a slow drag; 81%→93%
+       covers the same distance in a bit over half the scroll.
+
+       The numbers are the strip's slot in the GSAP unit layout, as a fraction of
+       the total: 6.25 + 6.25 + 1 (enter) + 3 (strip) + 1 (tail) = 17.5 units, so
+       the strip runs from unit 13.5 to 16.5 → 77%…94%. It opens exactly as the
+       team panel finishes arriving.
+
+       The slot doubled from 1.5 units when the `from` pose moved to centre: the
+       row travels 1140px now instead of 528px, and squeezing twice the distance
+       into the old band made it bolt across. Change `STEP * 3` or `RUNWAY` in
+       `products-act.tsx` and these two percentages move with them. */
+    animation-range: contain 77% contain 94%;
+    /* Promote to its own layer. Without this the compositor re-rasterises a
+       2000px-wide row of member art on the fly while it slides. */
+    will-change: transform;
+  }
+  /* The strip inside has to stop being a scroller of its own, or `.p-strip` is
+     only as wide as the clamped `.hstrip` box and `translateX(-100%)` travels a
+     fraction of the row. Same reason `.h-pin-track` flips to `max-content` +
+     `overflow: visible` under this @supports block. */
+  .p-strip .hstrip {
+    width: max-content;
+    max-width: none;
+    overflow: visible;
+    margin-inline: 0;
+  }
+  /* Matches `sm:w-[17rem]` on the card. */
+  @media (min-width: 40rem) {
+    .p-strip {
+      --card-w: 17rem;
+    }
   }
 }
-@supports (animation-timeline: view()) {
-  .a1-spin {
-    animation: a1-spin linear both;
-    animation-timeline: --act1;
-    animation-range: contain 0% contain 100%;
-  }
-  .a1-eyebrow {
-    animation: s-fade linear both;
-    animation-timeline: --act1;
-    animation-range: contain 16% contain 38%;
-  }
-  .a1-title {
-    animation: s-rise linear both;
-    animation-timeline: --act1;
-    animation-range: contain 22% contain 52%;
-  }
-  .a1-copy {
-    animation: s-fade linear both;
-    animation-timeline: --act1;
-    animation-range: contain 42% contain 70%;
-  }
-}
-@keyframes a1-spin {
+@keyframes p-strip-track {
   from {
-    transform: rotate(0deg);
+    /* Card one centred: half the leftover viewport, less the strip's own
+       inline padding, which sits in front of the first card. */
+    transform: translateX(calc((100vw - var(--card-w)) / 2 - var(--strip-pad)));
   }
   to {
-    transform: rotate(360deg);
+    transform: translateX(calc(-100% + 100vw));
   }
 }
+
 
 /* ================================================================== *
  * Cinematic "wow" layer — giant kinetic type + pixel-art windows.
@@ -815,6 +1042,72 @@ footer {
   }
 }
 
+/* Falling meteors — the counterpart to `.mote`: motes drift UP slowly and warm,
+   meteors streak DOWN fast and cold-bright. Written from scratch rather than
+   vendored; the reference implementation sits behind a paywall.
+
+   The whole streak is ONE element. The tail is the box itself, drawn as a
+   gradient that fades to nothing at its trailing end, and the head is a small
+   `::before` dot with a glow. Rotating the element by `--angle` sends both in
+   the same direction for free, which a two-element head+tail would have to keep
+   in sync by hand.
+
+   `top`/`left` place the START of the run. The element is rotated about its own
+   left edge, so it travels along its own length — `--travel` is how far.
+
+   Everything is fed in from pre-baked inline vars (see `METEORS` in
+   story-kit.tsx); no `Math.random()` at runtime, or SSR and client markup would
+   disagree and React would blow away the whole subtree on hydration. */
+.meteor {
+  position: absolute;
+  height: 1px;
+  width: var(--len, 90px);
+  transform-origin: left center;
+  /* Clockwise from east: ~45deg falls down-and-right. Not 215deg — that points
+     up-and-left and sends the whole field off the top of the screen. */
+  rotate: var(--angle, 45deg);
+  background: linear-gradient(
+    to left,
+    var(--mtc, var(--color-cream)),
+    transparent
+  );
+  opacity: 0;
+  pointer-events: none;
+  will-change: transform, opacity;
+  animation-name: meteor-fall;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+.meteor::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 0;
+  width: 2px;
+  height: 2px;
+  border-radius: 9999px;
+  transform: translateY(-50%);
+  background: var(--mtc, var(--color-cream));
+  box-shadow: 0 0 6px 1px var(--mtc, var(--color-cream));
+}
+@keyframes meteor-fall {
+  0% {
+    transform: translateX(0);
+    opacity: 0;
+  }
+  /* Snap in and out at the ends so a streak never pops into existence mid-air. */
+  8% {
+    opacity: var(--mto, 0.6);
+  }
+  82% {
+    opacity: var(--mto, 0.6);
+  }
+  100% {
+    transform: translateX(var(--travel, 900px));
+    opacity: 0;
+  }
+}
+
 /* Respect reduced-motion: kill the looping ambient animations. */
 @media (prefers-reduced-motion: reduce) {
   .animate-bob,
@@ -850,11 +1143,6 @@ footer {
   .s-bgpar,
   .clip-art,
   .s-words > span,
-  .s-progress,
-  .a1-spin,
-  .a1-eyebrow,
-  .a1-title,
-  .a1-copy,
   .h-pin-track {
     animation: none !important;
     transform: none !important;
@@ -867,11 +1155,11 @@ footer {
   .s-zoom,
   .s-par,
   .s-words > span,
-  .s-progress,
   .h-pin-track {
     filter: none !important;
   }
-  .mote {
+  .mote,
+  .meteor {
     display: none !important;
   }
   /* Un-pin the horizontal strip so all panels stay reachable by scroll. */
@@ -883,17 +1171,12 @@ footer {
     height: auto !important;
     overflow: visible !important;
   }
-  /* Un-pin the Act 1 opening — static centred hero, drum + text all visible. */
-  .a1-pin {
-    height: auto !important;
-  }
-  .a1-sticky {
-    position: static !important;
-    height: auto !important;
-    overflow: visible !important;
-  }
   .statbar > .fill {
     transition: none;
+  }
+  .statbar.is-scrub > .fill {
+    animation: none !important;
+    width: var(--val, 0%) !important;
   }
   html {
     scroll-behavior: auto;

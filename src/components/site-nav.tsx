@@ -1,205 +1,273 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
 
-/** Site flow (matches page section order). Labels carry diacritics, so they
- *  render in `font-pixel` (VT323) — the Silkscreen UI face has no Vietnamese. */
-const SECTIONS = [
-  { id: "top", label: "Trang chủ" },
-  { id: "about", label: "Giới thiệu" },
-  { id: "members", label: "Đội ngũ" },
-  { id: "products", label: "Sản phẩm" },
-  { id: "partners", label: "Đối tác" },
-  { id: "careers", label: "Tuyển dụng" },
+/**
+ * Site navigation — burger-only, at every breakpoint.
+ *
+ * The bar carries three things and nothing else: the logo, the primary CTA and
+ * the menu toggle. Every destination lives inside a full-screen overlay rather
+ * than a link row, which keeps the first viewport of the homepage almost
+ * entirely hero art.
+ *
+ * Three behaviours worth knowing before editing:
+ *
+ *  · TWO TONES. At the top of the page the hero is a bright cream sunset, so
+ *    the bar runs in dark ink with the light-background logo. Once scrolled it
+ *    runs cream on a dark block. Both logo files are used exactly as supplied —
+ *    never recoloured or filtered, only resized.
+ *  · DIRECTIONAL. Past the first screen the bar gets out of the way while you
+ *    read downward and returns the moment you scroll up, so navigation is one
+ *    gesture away without permanently occupying the viewport.
+ *  · NO BAR. Once scrolled it resolves into two small floating blocks with the
+ *    page showing through between them, instead of one full-width slab that
+ *    spends most of its width being an empty rectangle over the artwork.
+ */
+
+/**
+ * Menu destinations — one entry per homepage chapter, in story order, so the
+ * overlay reads as a table of contents. The numbering and the open stagger both
+ * derive from this array, and every href must resolve to a real section id on the
+ * page (`src/app/page.tsx`); never list a chapter that isn't mounted.
+ *
+ * "Con đường" (#way) is gone rather than merely unlisted — that chapter was cut
+ * from the page, so there is no id left for it to point at.
+ */
+/**
+ * Root-relative on purpose. The nav renders on `/doi-ngu` and `/tuyen-dung` too,
+ * where none of these sections exist — bare `#story` / `#products` anchors were
+ * silently dead on both subpages (they resolved to nothing and the click did
+ * nothing). `/#id` navigates home and then scrolls. `#contact` stays bare because
+ * the footer carries that id on every page.
+ */
+const NAV = [
+  { href: "/", label: "Trang chủ" },
+  { href: "/#story", label: "Câu chuyện" },
+  { href: "/#products", label: "Dấu ấn VNZ" },
+  { href: "/doi-ngu", label: "Đội ngũ" },
+  { href: "/#partners", label: "Đối tác" },
+  { href: "/tuyen-dung", label: "Tuyển dụng" },
+  { href: "#contact", label: "Liên hệ" },
 ];
 
-export function SiteNav() {
-  // `scrolled` drives the whole light→dark flip: at the very top the bar is
-  // transparent over the bright sunset hero (ink text + dark logo); once the
-  // page scrolls it becomes a frosted dark bar (cream text + cream logo).
+const CTA_HREF = "#contact";
+const CTA_LABEL = "Liên hệ hợp tác";
+
+/**
+ * `tone` describes what the bar sits ON at scroll-top, not the bar itself.
+ * Unscrolled, the menu glyph inherits the page: `"light"` (the paper homepage
+ * and `/tuyen-dung`) needs an ink glyph, `"dark"` (the `/doi-ngu` stage, which
+ * opens on a full-bleed `bg-ink` backdrop) needs a cream one — an ink glyph
+ * there is invisible until the first scroll paints the floating plate behind it.
+ * Once scrolled or opened, both tones converge on cream, so this only governs
+ * the top-of-page state.
+ */
+export function SiteNav({ tone = "light" }: { tone?: "light" | "dark" } = {}) {
   const [scrolled, setScrolled] = useState(false);
-  const [active, setActive] = useState<string>("top");
+  const [hidden, setHidden] = useState(false);
   const [open, setOpen] = useState(false);
+  const lastY = useRef(0);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 12);
+    const onScroll = () => {
+      const y = window.scrollY;
+      setScrolled(y > 16);
+      // The 5px threshold stops trackpad jitter from flickering the bar.
+      if (y < 140) setHidden(false);
+      else if (y > lastY.current + 5) setHidden(true);
+      else if (y < lastY.current - 5) setHidden(false);
+      lastY.current = y;
+    };
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Scrollspy — highlight the section nearest the top of the viewport.
+  // Close on Escape, and lock the page behind the overlay.
   useEffect(() => {
-    const ids = ["top", ...SECTIONS.map((s) => s.id), "contact"];
-    const els = ids
-      .map((id) => document.getElementById(id))
-      .filter((el): el is HTMLElement => el !== null);
-    if (!els.length) return;
-    const io = new IntersectionObserver(
-      (entries) => {
-        const visible = entries
-          .filter((e) => e.isIntersecting)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
-        if (visible) setActive(visible.target.id);
-      },
-      { rootMargin: "-45% 0px -50% 0px", threshold: [0, 0.25, 0.5, 1] },
-    );
-    els.forEach((el) => io.observe(el));
-    return () => io.disconnect();
-  }, []);
-
-  // Reflect the section you're reading in the browser tab title. The static
-  // metadata title (layout.tsx) is only the SSR/first-paint default — it never
-  // changes on its own, which is why the tab stayed frozen on one name. This
-  // swaps document.title live as the scrollspy `active` section changes.
-  useEffect(() => {
-    const labels: Record<string, string> = {
-      ...Object.fromEntries(SECTIONS.map((s) => [s.id, s.label])),
-      top: "Vietnam Z-DNA Technology", // home: show the brand, not "Trang chủ"
-      contact: "Liên hệ",
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
     };
-    document.title = `VNZ — ${labels[active] ?? "Vietnam Z-DNA Technology"}`;
-  }, [active]);
+    window.addEventListener("keydown", onKey);
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = "";
+    };
+  }, [open]);
 
-  const onDark = scrolled || open;
+  const solid = scrolled || open;
+  const onLightHero = !solid && tone === "light";
+  const floating = scrolled && !open;
 
   return (
-    <header
-      className={`fixed inset-x-0 top-0 z-50 transition-[background,box-shadow,backdrop-filter] duration-300 ${
-        onDark
-          ? "border-b border-cream/10 bg-ink/85 shadow-[0_10px_30px_-12px_rgba(0,0,0,0.8)] backdrop-blur-md"
-          : "border-b border-transparent bg-transparent"
-      }`}
-    >
-      <nav className="mx-auto flex max-w-7xl items-center justify-between px-5 py-3 sm:px-8 sm:py-4">
-        {/* Logo — dark mark on the bright hero, cream mark on the dark bar. */}
-        <a
-          href="#top"
-          className="flex items-center gap-2"
-          aria-label="VNZ home"
-        >
-          <span className="relative block w-16 sm:w-28">
+    <>
+      <header
+        className={`fixed inset-x-0 top-0 z-[60] transition-transform duration-500 ease-[cubic-bezier(0.22,0.8,0.18,1)] ${
+          hidden && !open ? "-translate-y-[130%]" : "translate-y-0"
+        }`}
+      >
+        <nav className="mx-auto flex max-w-[92rem] items-center justify-between px-4 py-3 sm:px-7 sm:py-4">
+          {/* No backing plate at any scroll position — the logo sits directly
+              on the page. */}
+          <Link href="/" aria-label="VNZ — trang chủ" className="shrink-0">
             <Image
-              src="/general/logo-light.png"
-              alt="VNZ"
+              src={
+                onLightHero
+                  ? "/general/logo-light.png"
+                  : "/general/logo-dark.png"
+              }
+              alt="VNZ — Vietnam Z-DNA Technology"
               width={1094}
               height={560}
               priority
               unoptimized
-              style={{ opacity: onDark ? 0 : 1 }}
-              className="pixelated block h-auto w-full drop-shadow-[2px_2px_0_rgba(27,36,51,0.3)] transition-opacity duration-300"
+              className={`pixelated h-auto transition-[width] duration-300 ${
+                floating ? "w-20 sm:w-[5.5rem]" : "w-24 sm:w-28"
+              }`}
             />
-            <Image
-              src="/general/logo-dark.png"
-              alt=""
-              aria-hidden
-              fill
-              unoptimized
-              style={{ opacity: onDark ? 1 : 0 }}
-              className="pixelated object-contain drop-shadow-[2px_2px_0_rgba(0,0,0,0.5)] transition-opacity duration-300"
-            />
-          </span>
-        </a>
+          </Link>
 
-        {/* Desktop links */}
-        <ul className="hidden items-center gap-1 font-pixel text-base lg:flex">
-          {SECTIONS.map((s) => {
-            const isActive = active === s.id;
-            return (
-              <li key={s.id}>
-                <a
-                  href={`#${s.id}`}
-                  aria-current={isActive ? "true" : undefined}
-                  className={`group relative block px-3 py-2 uppercase tracking-wider transition-colors hover:text-ember ${
-                    isActive
-                      ? "text-ember"
-                      : onDark
-                        ? "text-cream/90"
-                        : "text-ink"
-                  }`}
-                >
-                  {s.label}
-                  <span
-                    className={`pointer-events-none absolute inset-x-2 bottom-1 h-[2px] origin-left bg-ember transition-transform duration-200 ease-out ${
-                      isActive
-                        ? "scale-x-100"
-                        : "scale-x-0 group-hover:scale-x-100"
-                    }`}
-                  />
-                </a>
-              </li>
-            );
-          })}
-          <li className="ml-2">
+          <div className="flex shrink-0 items-center gap-2.5 sm:gap-3">
             <a
-              href="#contact"
-              className="font-pixel inline-flex items-center gap-1.5 border-2 border-ember bg-ember/0 px-4 py-1.5 text-base uppercase tracking-wider text-ember transition-colors duration-200 hover:bg-ember hover:text-cream"
+              href={CTA_HREF}
+              className="hidden shrink-0 whitespace-nowrap bg-ember px-5 py-3 font-pixel text-base uppercase leading-none tracking-[0.1em] text-cream shadow-[4px_4px_0_0_rgba(0,0,0,0.5)] transition-[background-color,transform,box-shadow] duration-150 hover:bg-sunset active:translate-x-1 active:translate-y-1 active:shadow-none sm:block sm:text-lg"
             >
-              Liên hệ
+              {CTA_LABEL}
             </a>
-          </li>
-        </ul>
 
-        {/* Mobile toggle */}
-        <button
-          type="button"
-          onClick={() => setOpen((v) => !v)}
-          aria-label={open ? "Đóng menu" : "Mở menu"}
-          aria-expanded={open}
-          className={`flex h-10 w-10 flex-col items-center justify-center gap-1.5 lg:hidden ${
-            onDark ? "text-cream" : "text-ink"
-          }`}
-        >
-          <span
-            className={`block h-0.5 w-6 bg-current transition-transform duration-200 ${
-              open ? "translate-y-2 rotate-45" : ""
-            }`}
-          />
-          <span
-            className={`block h-0.5 w-6 bg-current transition-opacity duration-200 ${
-              open ? "opacity-0" : ""
-            }`}
-          />
-          <span
-            className={`block h-0.5 w-6 bg-current transition-transform duration-200 ${
-              open ? "-translate-y-2 -rotate-45" : ""
-            }`}
-          />
-        </button>
-      </nav>
+            <button
+              type="button"
+              onClick={() => setOpen((v) => !v)}
+              aria-label={open ? "Đóng menu" : "Mở menu"}
+              aria-expanded={open}
+              aria-controls="site-menu"
+              className={`relative z-[70] flex h-[3.25rem] w-[3.25rem] shrink-0 flex-col items-center justify-center gap-[7px] transition-[background-color,box-shadow,border-color,color] duration-300 ${
+                open
+                  ? "text-cream"
+                  : onLightHero
+                    ? "text-ink hover:text-ember"
+                    : "text-cream hover:text-ember"
+              } ${
+                floating && !open
+                  ? "border border-cream/12 bg-ink/90 shadow-[4px_4px_0_0_rgba(0,0,0,0.5)] backdrop-blur-md"
+                  : "border border-transparent"
+              }`}
+            >
+              <span
+                className={`block h-[3px] w-7 bg-current transition-transform duration-300 ${
+                  open ? "translate-y-[10px] rotate-45" : ""
+                }`}
+              />
+              <span
+                className={`block h-[3px] w-7 bg-current transition-opacity duration-200 ${
+                  open ? "opacity-0" : ""
+                }`}
+              />
+              <span
+                className={`block h-[3px] w-7 bg-current transition-transform duration-300 ${
+                  open ? "-translate-y-[10px] -rotate-45" : ""
+                }`}
+              />
+            </button>
+          </div>
+        </nav>
+      </header>
 
-      {/* Mobile drawer */}
+      {/* ── Full-screen menu ── */}
       <div
-        className={`overflow-hidden border-cream/10 bg-ink/95 backdrop-blur-md transition-[max-height,opacity] duration-300 lg:hidden ${
-          open ? "max-h-96 border-t opacity-100" : "max-h-0 opacity-0"
+        id="site-menu"
+        aria-hidden={!open}
+        className={`fixed inset-0 z-[55] transition-[opacity,visibility] duration-300 ${
+          open ? "visible opacity-100" : "invisible opacity-0"
         }`}
       >
-        <ul className="flex flex-col gap-1 px-5 py-4 font-pixel text-lg">
-          {SECTIONS.map((s) => (
-            <li key={s.id}>
-              <a
-                href={`#${s.id}`}
-                onClick={() => setOpen(false)}
-                className={`block px-2 py-2 uppercase tracking-wider transition-colors hover:text-ember ${
-                  active === s.id ? "text-ember" : "text-cream/90"
-                }`}
-              >
-                {s.label}
-              </a>
-            </li>
-          ))}
-          <li className="mt-1">
-            <a
-              href="#contact"
-              onClick={() => setOpen(false)}
-              className="block border-2 border-ember px-2 py-2 text-center uppercase tracking-wider text-ember transition-colors hover:bg-ember hover:text-cream"
+        <div className="absolute inset-0 bg-ink" />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 [background:radial-gradient(90%_70%_at_78%_18%,rgba(232,84,31,0.16),transparent_70%)]"
+        />
+        <div className="relative flex h-full flex-col justify-between overflow-y-auto px-5 pb-10 pt-28 sm:px-8 sm:pt-32">
+          <nav aria-label="Điều hướng chính" className="mx-auto w-full max-w-[92rem]">
+            <ul className="flex flex-col">
+              {NAV.map((item, i) => (
+                <li
+                  key={item.href}
+                  className="border-b border-cream/10"
+                  style={{
+                    transform: open ? "none" : "translateY(18px)",
+                    opacity: open ? 1 : 0,
+                    transition: `transform 420ms cubic-bezier(0.22,0.8,0.18,1) ${
+                      60 + i * 55
+                    }ms, opacity 420ms ease ${60 + i * 55}ms`,
+                  }}
+                >
+                  <a
+                    href={item.href}
+                    onClick={() => setOpen(false)}
+                    className="group flex items-baseline gap-5 py-3 text-cream sm:gap-8 sm:py-4"
+                  >
+                    <span className="font-mono text-xs text-cream/45 sm:text-sm">
+                      {String(i + 1).padStart(2, "0")}
+                    </span>
+                    {/* Type is capped well below the hero's scale on purpose —
+                        the full chapter list has to fit a laptop viewport without
+                        the overlay turning into a scroll of its own. */}
+                    <span className="font-pixel text-[clamp(1.6rem,5.5vw,3.25rem)] uppercase leading-none tracking-[0.02em] transition-[transform,color] duration-300 group-hover:translate-x-3 group-hover:text-ember">
+                      {item.label}
+                    </span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+
+            <div
+              className="mt-10"
+              style={{
+                opacity: open ? 1 : 0,
+                transition: "opacity 420ms ease 300ms",
+              }}
             >
-              Liên hệ
-            </a>
-          </li>
-        </ul>
+              <a
+                href={CTA_HREF}
+                onClick={() => setOpen(false)}
+                className="inline-block bg-ember px-6 py-4 font-pixel text-xl uppercase leading-none tracking-[0.1em] text-cream shadow-[5px_5px_0_0_#000] transition-colors hover:bg-sunset"
+              >
+                {CTA_LABEL} <span aria-hidden>▸</span>
+              </a>
+            </div>
+          </nav>
+
+          <div
+            className="mx-auto mt-14 flex w-full max-w-[92rem] flex-col gap-4 border-t border-cream/10 pt-6 sm:flex-row sm:items-center sm:justify-between"
+            style={{
+              opacity: open ? 1 : 0,
+              transition: "opacity 420ms ease 380ms",
+            }}
+          >
+            <p className="font-ui text-[9px] uppercase tracking-[0.3em] text-gold">
+              Vietnamese Minds · Global Solutions
+            </p>
+            {/* Vietnamese is the only build that exists, so the English entry is
+                shown as pending rather than faked with a dead link. */}
+            <span className="flex items-center gap-2 font-pixel text-base uppercase tracking-[0.12em]">
+              <span className="text-ember">VI</span>
+              <span aria-hidden className="text-cream/25">
+                |
+              </span>
+              <span
+                title="Bản tiếng Anh đang được xây dựng"
+                className="cursor-not-allowed text-cream/35"
+              >
+                EN
+              </span>
+            </span>
+          </div>
+        </div>
       </div>
-    </header>
+    </>
   );
 }

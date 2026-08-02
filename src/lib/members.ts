@@ -72,6 +72,14 @@ export type Member = {
   // --- Vietnamese profile block (hero panel; rendered in font-viet) ---
   fullName: string; // Họ và tên — e.g. "Trần Đình Thiên Tân"
   title: string; // Chức vụ — e.g. "Founder"
+  /**
+   * Cấp bậc — the real engineering seniority shown on the member card, replacing
+   * the old RPG `level`. LEFT UNSET ON PURPOSE: it is a fact about a specific
+   * person that cannot be inferred from `title` ("Kỹ sư Full-Stack" says nothing
+   * about Senior vs Junior), so the card simply omits the badge until it is
+   * filled in rather than displaying a guess.
+   */
+  seniority?: string;
   hometown: string; // Quê quán — e.g. "Nam Định"
   hobbies: string; // Sở thích — e.g. "Lập trình, Thể thao, Âm nhạc"
   joinDate: string; // Ngày gia nhập công ty — e.g. "01/06/2026"
@@ -350,3 +358,26 @@ export const MEMBERS: Member[] = [
     hometownImg: saigonImg,
   },
 ];
+
+/**
+ * Phòng ban — DERIVED FROM `title`, not stored per member.
+ *
+ * One map instead of eleven fields: the department is a pure function of the job
+ * title here, so duplicating it onto every entry would just be eleven places to
+ * forget when a title changes. Correct a department by editing this map.
+ *
+ * These were inferred from the titles, not supplied — check them against the real
+ * org chart before this ships.
+ */
+export const DEPARTMENT_BY_TITLE: Record<string, string> = {
+  "CEO": "Ban điều hành",
+  "CCO/CTO": "Ban điều hành",
+  "Product Designer": "Design",
+  "Kỹ sư Full-Stack": "Engineering",
+  "Trưởng nhóm Chiến lược": "Chiến lược",
+};
+
+/** Department for a member's title; falls back to the title itself if unmapped. */
+export function departmentOf(title: string): string {
+  return DEPARTMENT_BY_TITLE[title] ?? title;
+}
