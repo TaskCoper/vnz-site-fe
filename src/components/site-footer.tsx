@@ -1,11 +1,18 @@
 import Image from "next/image";
 import Link from "next/link";
 import { PixelBlastBg } from "@/components/bits/pixel-blast-bg";
+import { FOOTER } from "@/lib/dictionary";
+import { localePath, t, type Locale } from "@/lib/i18n";
 import { CONTACT, FOOTER_NAV, SITE, SOCIALS } from "@/lib/site";
 
 /**
- * Site footer — the CRT sign-off, and the page's only `#contact` anchor (every
- * "Liên hệ hợp tác" CTA lands here).
+ * Site footer — the CRT sign-off, and the site's only `#contact` anchor.
+ *
+ * IT IS NO LONGER WHERE THE CTAs LAND. The nav button, the Đối tác CTA, the
+ * locked product's "Nhận tin ra mắt" and the careers `APPLY_HREF` all point at
+ * `/lien-he` now — a real page instead of a jump to the bottom of whatever you
+ * were reading. The id stays because it costs nothing and any old link or
+ * bookmark still resolves; nothing in the repo targets it.
  *
  * Deliberately still DARK while the chapters above are white paper: the page runs
  * dark hero → light body → dark footer, so the footer closing the frame is the
@@ -27,7 +34,7 @@ import { CONTACT, FOOTER_NAV, SITE, SOCIALS } from "@/lib/site";
  * page's only WebGL: dynamically imported, last in document order, and absent
  * entirely under `prefers-reduced-motion`.
  */
-export function SiteFooter() {
+export function SiteFooter({ locale }: { locale: Locale }) {
   const hasContact = Boolean(
     CONTACT.email || CONTACT.recruitEmail || CONTACT.phone || CONTACT.address,
   );
@@ -59,7 +66,7 @@ export function SiteFooter() {
         <div className="grid gap-12 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.1fr)] lg:gap-10">
           {/* ── Brand ── */}
           <div>
-            <Link href="/" className="inline-block">
+            <Link href={localePath("/", locale)} className="inline-block">
               <Image
                 src="/general/logo-dark.png"
                 alt={SITE.name}
@@ -73,24 +80,24 @@ export function SiteFooter() {
               {SITE.tagline}
             </p>
             <p className="mt-4 max-w-sm font-viet text-sm font-light leading-relaxed text-cream/65">
-              {SITE.positioning}
+              {t(SITE.positioning, locale)}
             </p>
           </div>
 
           {/* ── Navigation groups ── */}
           {FOOTER_NAV.map((group) => (
-            <nav key={group.heading} aria-label={group.heading}>
+            <nav key={t(group.heading, locale)} aria-label={t(group.heading, locale)}>
               <h2 className="font-pixel text-sm uppercase tracking-[0.25em] text-cream/45">
-                {group.heading}
+                {t(group.heading, locale)}
               </h2>
               <ul className="mt-4 flex flex-col gap-2.5">
                 {group.links.map((l) => (
-                  <li key={l.href}>
+                  <li key={l.path}>
                     <Link
-                      href={l.href}
+                      href={localePath(l.path, locale)}
                       className="font-viet text-sm font-light text-cream/75 transition-colors duration-200 hover:text-ember"
                     >
-                      {l.label}
+                      {t(l.label, locale)}
                     </Link>
                   </li>
                 ))}
@@ -101,7 +108,7 @@ export function SiteFooter() {
           {/* ── Contact ── renders only what actually exists. */}
           <div>
             <h2 className="font-pixel text-sm uppercase tracking-[0.25em] text-cream/45">
-              Liên hệ
+              {t(FOOTER.contact, locale)}
             </h2>
 
             {hasContact ? (
@@ -123,7 +130,9 @@ export function SiteFooter() {
                       className="transition-colors duration-200 hover:text-ember"
                     >
                       {CONTACT.recruitEmail}
-                      <span className="text-cream/45"> · tuyển dụng</span>
+                      <span className="text-cream/45">
+                        {t(FOOTER.recruitTag, locale)}
+                      </span>
                     </a>
                   </li>
                 ) : null}
@@ -145,8 +154,7 @@ export function SiteFooter() {
               /* No contact details in the repo yet — offer the one route that does
                  exist rather than a dead placeholder. */
               <p className="mt-4 max-w-xs font-viet text-sm font-light leading-relaxed text-cream/65">
-                Có một bài toán cần giải bằng công nghệ? Gửi lời nhắn qua trang
-                tuyển dụng, hoặc theo dõi VNZ để biết khi nào chúng tôi mở cửa.
+                {t(FOOTER.noChannels, locale)}
               </p>
             )}
 
@@ -168,10 +176,10 @@ export function SiteFooter() {
             ) : null}
 
             <Link
-              href="/tuyen-dung"
+              href={localePath("/tuyen-dung", locale)}
               className="mt-6 inline-flex items-center gap-2 border-2 border-cream/40 px-5 py-2.5 font-pixel text-base uppercase tracking-[0.12em] text-cream transition-colors duration-200 hover:border-ember hover:text-ember"
             >
-              Gia nhập đội ngũ <span aria-hidden>▸</span>
+              {t(FOOTER.joinTeam, locale)} <span aria-hidden>▸</span>
             </Link>
           </div>
         </div>
@@ -179,10 +187,11 @@ export function SiteFooter() {
         {/* ── Legal bar ── */}
         <div className="mt-14 flex flex-col items-center gap-3 border-t border-cream/12 pt-6 sm:flex-row sm:justify-between">
           <p className="font-mono text-[11px] text-cream/55">
-            © {new Date().getFullYear()} {SITE.legalName}. Mọi quyền được bảo lưu.
+            © {new Date().getFullYear()} {SITE.legalName}.{" "}
+            {t(FOOTER.rights, locale)}
           </p>
           <p className="font-mono text-[11px] text-cream/55">
-            Press START to build something great.
+            {t(FOOTER.signoff, locale)}
           </p>
         </div>
       </div>

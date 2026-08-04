@@ -1,6 +1,8 @@
 import Image from "next/image";
 import PixelTransition from "@/components/bits/PixelTransition";
 import { MEMBERS, departmentOf } from "@/lib/members";
+import { TEAM_UI } from "@/lib/dictionary";
+import { localePath, t, type Locale } from "@/lib/i18n";
 
 /**
  * Đội ngũ — the member strip.
@@ -35,7 +37,7 @@ import { MEMBERS, departmentOf } from "@/lib/members";
 /** How many make the strip. The rest live on `/doi-ngu`. */
 const PREVIEW_COUNT = 6;
 
-export function TeamStrip() {
+export function TeamStrip({ locale }: { locale: Locale }) {
   const preview = MEMBERS.slice(0, PREVIEW_COUNT);
   const remaining = MEMBERS.length - preview.length;
 
@@ -57,7 +59,7 @@ export function TeamStrip() {
                   <>
                     <Image
                       src={m.hometownImg}
-                      alt={`Quê hương ${m.hometown}`}
+                      alt={`${t(TEAM_UI.hometownAlt, locale)} ${m.hometown}`}
                       fill
                       unoptimized
                       sizes="17rem"
@@ -90,7 +92,7 @@ export function TeamStrip() {
                     {/* Department, derived from `title` via the map in members.ts
                         — replaces the RPG class ("Visionary", "Ranger"). */}
                     <span className="absolute right-2 top-2 font-pixel text-xs uppercase tracking-[0.15em] text-cream/60">
-                      {departmentOf(m.title)}
+                      {t(departmentOf(m.title), locale)}
                     </span>
                   </>
                 }
@@ -110,7 +112,7 @@ export function TeamStrip() {
                     />
                     <div className="absolute inset-x-0 bottom-0 p-4 text-left">
                       <p className="font-ui text-[10px] uppercase tracking-[0.28em] text-gold">
-                        Quê quán
+                        {t(TEAM_UI.hometownLabel, locale)}
                       </p>
                       <p className="mt-1 font-pixel text-2xl uppercase leading-none text-cream">
                         {m.hometown}
@@ -125,7 +127,7 @@ export function TeamStrip() {
                   {m.name}
                 </h3>
                 <p className="font-viet text-sm font-medium leading-snug tint-text">
-                  {m.title}
+                  {t(m.title, locale)}
                 </p>
                 <p className="font-viet text-xs font-light leading-snug text-ink-soft">
                   {m.fullName}
@@ -142,19 +144,19 @@ export function TeamStrip() {
               row reads as continuing rather than ending. */}
           <li className="shrink-0">
             <a
-              href="/doi-ngu"
+              href={localePath("/doi-ngu", locale)}
               className="group flex h-full w-[15rem] flex-col items-center justify-center gap-3 border border-dashed border-ink/25 paper-card px-6 text-center transition-colors duration-300 hover:border-ember sm:w-[17rem]"
             >
               <span className="font-pixel text-5xl leading-none text-ink-soft/50 transition-colors duration-300 group-hover:text-ember">
                 +{remaining}
               </span>
               <span className="font-pixel text-xl uppercase leading-tight text-ink-soft transition-colors duration-300 group-hover:text-ink">
-                Xem toàn bộ
+                {t(TEAM_UI.seeAllLine1, locale)}
                 <br />
-                đội ngũ
+                {t(TEAM_UI.seeAllLine2, locale)}
               </span>
               <span className="font-viet text-xs font-light text-ink-soft/70">
-                {remaining} thành viên nữa
+                {remaining} {t(TEAM_UI.moreMembers, locale)}
               </span>
               <span
                 aria-hidden

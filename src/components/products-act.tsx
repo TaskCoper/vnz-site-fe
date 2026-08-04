@@ -7,6 +7,8 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { Chapter } from "@/components/story-kit";
 import { TeamStrip } from "@/components/team";
 import { PRODUCTS, type Product } from "@/lib/products";
+import { PRODUCTS_UI } from "@/lib/dictionary";
+import { localePath, t, type Locale } from "@/lib/i18n";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -76,48 +78,34 @@ const STEP = 1;
 const HOLD = STEP * 1.25;
 
 /**
- * MEANINGLESS FILLER, NOT THE REAL COPY. A locked product ships no detail text at
- * all — `src/lib/products.ts` omits `tagline` / `desc` / `features` on purpose so
- * the unreleased pitch never reaches the browser, and keeps the real draft in a
- * comment that the build strips.
- *
- * These strings exist only to give the blur something text-shaped to blur. They
- * are deliberately generic: someone who opens devtools and deletes the blur finds
- * nothing worth reading, which is the whole point of the arrangement. NEVER paste
- * the real pitch in here to "make the blur look right".
- */
-const LOCKED_FILLER = {
-  tagline: "Thông tin sẽ được công bố khi sản phẩm ra mắt",
-  desc: "Nội dung chi tiết đang được hoàn thiện và sẽ được chia sẻ vào đúng ngày mở cửa cùng toàn bộ tính năng của sản phẩm.",
-  features: [
-    "Nội dung đang hoàn thiện",
-    "Nội dung đang hoàn thiện",
-    "Nội dung đang hoàn thiện",
-    "Nội dung đang hoàn thiện",
-  ],
-};
-
-/**
  * A locked product's pitch column. Same shape as a released one — headline,
  * paragraph, bullet list — so the two products read as one layout rather than as
- * a product next to an "empty" slot, but every line is `LOCKED_FILLER` under a
- * blur.
+ * a product next to an "empty" slot, but every line is meaningless filler from
+ * `PRODUCTS_UI.locked*` under a blur.
+ *
+ * THE FILLER IS NOT THE REAL COPY. A locked product ships no detail text at all
+ * — `src/lib/products.ts` omits `tagline` / `desc` / `features` on purpose so the
+ * unreleased pitch never reaches the browser, and keeps the real draft in a
+ * comment the build strips. These strings exist only to give the blur something
+ * text-shaped to blur, and are deliberately generic: someone who opens devtools
+ * and deletes the blur finds nothing worth reading, which is the whole point.
+ * NEVER paste the real pitch into the dictionary to "make the blur look right".
  *
  * `aria-hidden` on the blurred block, with a real sentence for screen readers
  * underneath: blurred nonsense is worse than useless when read aloud.
  */
-function LockedPitch() {
+function LockedPitch({ locale }: { locale: Locale }) {
   return (
     <>
       <div aria-hidden className="select-none blur-[6px]">
         <h3 className="mt-4 font-pixel text-[clamp(1.4rem,2.8vw,2.1rem)] uppercase leading-[0.95] text-ink">
-          {LOCKED_FILLER.tagline}
+          {t(PRODUCTS_UI.lockedTagline, locale)}
         </h3>
         <p className="mt-3 max-w-xl font-viet text-sm font-light leading-relaxed text-ink-soft sm:text-base">
-          {LOCKED_FILLER.desc}
+          {t(PRODUCTS_UI.lockedDesc, locale)}
         </p>
         <ul className="mt-5 grid gap-2 sm:grid-cols-2">
-          {LOCKED_FILLER.features.map((f, i) => (
+          {[0, 1, 2, 3].map((i) => (
             <li
               key={i}
               className="flex gap-2.5 font-viet text-sm font-light leading-snug text-ink-soft"
@@ -125,14 +113,12 @@ function LockedPitch() {
               <span aria-hidden className="mt-[2px] tint-text">
                 ▸
               </span>
-              {f}
+              {t(PRODUCTS_UI.lockedFeature, locale)}
             </li>
           ))}
         </ul>
       </div>
-      <p className="sr-only">
-        Sản phẩm chưa ra mắt. Thông tin chi tiết sẽ được công bố vào ngày mở cửa.
-      </p>
+      <p className="sr-only">{t(PRODUCTS_UI.lockedSr, locale)}</p>
     </>
   );
 }
@@ -142,7 +128,13 @@ function LockedPitch() {
  * it is what the timeline reads, so renumber here to re-sequence. Art is always
  * on the left and the pitch always on the right; rows do not alternate.
  */
-function ProductRow({ product }: { product: Product }) {
+function ProductRow({
+  product,
+  locale,
+}: {
+  product: Product;
+  locale: Locale;
+}) {
   const external = product.href.startsWith("http");
 
   return (
@@ -173,7 +165,7 @@ function ProductRow({ product }: { product: Product }) {
             >
               <Image
                 src={product.logo}
-                alt={`${product.name} — biểu tượng sản phẩm`}
+                alt={`${product.name} — ${t(PRODUCTS_UI.logoAlt, locale)}`}
                 fill
                 unoptimized
                 sizes="(max-width:1024px) 60vw, 22rem"
@@ -196,21 +188,21 @@ function ProductRow({ product }: { product: Product }) {
       <div>
         <div data-p="3">
           <span className="font-pixel text-sm uppercase tracking-[0.3em] tint-text">
-            {product.category}
+            {t(product.category, locale)}
           </span>
 
           {product.tagline ? (
             <>
               <h3 className="mt-4 font-pixel text-[clamp(1.4rem,2.8vw,2.1rem)] uppercase leading-[0.95] text-ink">
-                {product.tagline}
+                {t(product.tagline, locale)}
               </h3>
               <p className="mt-3 max-w-xl font-viet text-sm font-light leading-relaxed text-ink-soft sm:text-base">
-                {product.desc}
+                {product.desc ? t(product.desc, locale) : null}
               </p>
 
               {product.features ? (
                 <ul className="mt-5 grid gap-2 sm:grid-cols-2">
-                  {product.features.map((f) => (
+                  {t(product.features, locale).map((f) => (
                     <li
                       key={f}
                       className="flex gap-2.5 font-viet text-sm font-light leading-snug text-ink-soft"
@@ -225,7 +217,7 @@ function ProductRow({ product }: { product: Product }) {
               ) : null}
             </>
           ) : (
-            <LockedPitch />
+            <LockedPitch locale={locale} />
           )}
         </div>
 
@@ -236,20 +228,20 @@ function ProductRow({ product }: { product: Product }) {
             do here has to stay legible and clickable. */}
         <a
           data-p="4"
-          href={product.href}
+          href={external ? product.href : localePath(product.href, locale)}
           {...(external
             ? { target: "_blank", rel: "noopener noreferrer" }
             : {})}
           className="btn-pixel font-pixel mt-7 inline-flex items-center gap-2 px-6 py-2.5 text-base uppercase tracking-wider"
         >
-          {product.cta} <span aria-hidden>▸</span>
+          {t(product.cta, locale)} <span aria-hidden>▸</span>
         </a>
       </div>
     </article>
   );
 }
 
-export function ProductsAct() {
+export function ProductsAct({ locale }: { locale: Locale }) {
   const wrap = useRef<HTMLDivElement>(null);
   const stage = useRef<HTMLDivElement>(null);
 
@@ -409,10 +401,10 @@ export function ProductsAct() {
               Both are in the same cell (`grid` + `col-start-1 row-start-1`) so
               the crossfade happens in place with no reflow. */}
           <span data-label="products" className="col-start-1 row-start-1">
-            <Chapter label="Dấu ấn VNZ" />
+            <Chapter label={t(PRODUCTS_UI.chapter, locale)} />
           </span>
           <span data-label="team" className="col-start-1 row-start-1">
-            <Chapter label="Đội ngũ" />
+            <Chapter label={t(PRODUCTS_UI.teamChapter, locale)} />
           </span>
         </div>
 
@@ -425,7 +417,7 @@ export function ProductsAct() {
             data-proj
             className="absolute inset-0 flex items-center"
           >
-            <ProductRow product={p} />
+            <ProductRow product={p} locale={locale} />
           </div>
         ))}
 
@@ -451,7 +443,7 @@ export function ProductsAct() {
               moves — a CSS scroll-timeline animation, not GSAP. */}
           <div className="w-full overflow-hidden">
             <div className="p-strip">
-              <TeamStrip />
+              <TeamStrip locale={locale} />
             </div>
           </div>
         </div>

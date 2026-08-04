@@ -1,4 +1,5 @@
 import { ProductsAct } from "@/components/products-act";
+import type { Locale } from "@/lib/i18n";
 
 /**
  * Chương 03 · Dấu ấn VNZ — the proof. After the story chapter's argument this is
@@ -19,7 +20,7 @@ import { ProductsAct } from "@/components/products-act";
  * so the teaser is genuinely empty rather than hidden text anyone can read in
  * devtools.
  */
-export function Products() {
+export function Products({ locale }: { locale: Locale }) {
   // PULLED UP BY ONE VIEWPORT ON PURPOSE. Chương 01 ends by shrinking its whole
   // stage into a card; this section rides up over it during that same stretch of
   // scroll, which is what makes the handoff read as one section replacing another
@@ -39,7 +40,7 @@ export function Products() {
       {/* The chapter label is inside `<ProductsAct>`, pinned with the stage — out
           here it would scroll away in the act's first few hundred pixels. There is
           no title or lead: both were cut, so the chapter opens on the products. */}
-      <ProductsAct />
+      <ProductsAct locale={locale} />
 
       {/* NO `ActGap` HERE ANY MORE. It was a chapter break between this act and
           Đối tác, and once both chapters became the same paper colour all it

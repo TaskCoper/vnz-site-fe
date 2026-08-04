@@ -1,4 +1,7 @@
+import Link from "next/link";
 import { GridDistortionBg } from "@/components/bits/grid-distortion-bg";
+import { HERO } from "@/lib/dictionary";
+import { localePath, t, type Locale } from "@/lib/i18n";
 
 /**
  * Hero #1 — the cinematic "title screen". A pixel Vietnamese lakeside at sunset,
@@ -20,7 +23,7 @@ const PETALS = [
   { left: "92%", dur: "13s", delay: "1.6s", drift: "-26px", size: 6, c: "var(--color-sunset)" },
 ];
 
-export function Hero() {
+export function Hero({ locale }: { locale: Locale }) {
   return (
     <section
       id="top"
@@ -81,7 +84,7 @@ export function Hero() {
         {/* Eyebrow */}
         <span className="animate-hero-rise inline-flex items-center gap-2 border border-cream/25 bg-ink/35 px-4 py-1.5 font-pixel text-sm uppercase tracking-[0.25em] text-cream/85 backdrop-blur-sm sm:text-base">
           <span className="animate-twinkle text-gold">❖</span>
-          Vietnam Z-DNA Technology
+          {t(HERO.eyebrow, locale)}
         </span>
 
         {/* Bilingual headline */}
@@ -89,9 +92,11 @@ export function Hero() {
           className="animate-hero-rise mt-7 font-pixel font-normal uppercase leading-[0.9] tracking-tight text-cream [text-shadow:3px_3px_0_rgba(12,16,26,0.6),0_0_36px_rgba(0,0,0,0.45)]"
           style={{ animationDelay: "0.08s" }}
         >
-          <span className="block text-5xl sm:text-7xl lg:text-8xl">Dấu ấn công nghệ</span>
+          <span className="block text-5xl sm:text-7xl lg:text-8xl">
+            {t(HERO.headlineTop, locale)}
+          </span>
           <span className="mt-1 block bg-gradient-to-r from-gold via-sunset to-lantern bg-clip-text text-5xl text-transparent drop-shadow-[0_4px_22px_rgba(232,84,31,0.35)] sm:text-7xl lg:text-8xl">
-            Khát vọng thế hệ mới
+            {t(HERO.headlineBottom, locale)}
           </span>
         </h1>
 
@@ -101,8 +106,19 @@ export function Hero() {
           style={{ animationDelay: "0.16s" }}
         >
           <span className="h-px flex-1 bg-gradient-to-r from-transparent to-gold/60" />
-          <p className="font-display text-base uppercase tracking-[0.12em] text-cream/80 sm:text-lg lg:text-xl">
-            Defining Tech, Driven by a New Generation
+          {/* THE FACE SWITCHES WITH THE LOCALE, and it has to. This line is the
+              OTHER language in each build — the company's own bilingual lockup —
+              so on `/en` it carries Vietnamese, and `font-display` (Pixelify
+              Sans) has no diacritics: left alone it would render "Dấu ấn công
+              nghệ" as a row of missing-glyph boxes. `font-pixel` (VT323) ships
+              the Vietnamese subset and is the only display face that can hold
+              this string. */}
+          <p
+            className={`text-base uppercase tracking-[0.12em] text-cream/80 sm:text-lg lg:text-xl ${
+              locale === "en" ? "font-pixel" : "font-display"
+            }`}
+          >
+            {t(HERO.subline, locale)}
           </p>
           <span className="h-px flex-1 bg-gradient-to-l from-transparent to-gold/60" />
         </div>
@@ -112,8 +128,10 @@ export function Hero() {
           className="animate-hero-rise mt-7 max-w-2xl font-viet text-base font-light leading-relaxed text-cream/85 [text-shadow:0_1px_12px_rgba(0,0,0,0.9)] sm:text-lg"
           style={{ animationDelay: "0.24s" }}
         >
-          “VNZ không được xây dựng để gia công — chúng tôi được xây dựng để{" "}
-          <span className="font-medium text-gold">kiến tạo dấu ấn công nghệ thế hệ mới.”</span>
+          {t(HERO.thesisOpen, locale)}
+          <span className="font-medium text-gold">
+            {t(HERO.thesisAccent, locale)}
+          </span>
         </p>
 
         {/* CTAs */}
@@ -127,14 +145,17 @@ export function Hero() {
             href="#story"
             className="btn-pixel font-pixel inline-flex items-center gap-2 px-7 py-3 text-lg uppercase tracking-wider"
           >
-            Khám phá VNZ <span aria-hidden>▸</span>
+            {t(HERO.ctaPrimary, locale)} <span aria-hidden>▸</span>
           </a>
-          <a
-            href="/tuyen-dung"
+          {/* `Link`, not `<a>` — a bare anchor to a route does a full document
+              reload and drops the app shell. The `#story` CTA above stays an
+              `<a>`: it is a same-page scroll, not a navigation. */}
+          <Link
+            href={localePath("/tuyen-dung", locale)}
             className="font-pixel inline-flex items-center gap-2 border-2 border-cream/40 px-7 py-3 text-lg uppercase tracking-wider text-cream transition-colors duration-200 hover:border-ember hover:bg-cream/5 hover:text-ember"
           >
-            Gia nhập đội ngũ
-          </a>
+            {t(HERO.ctaSecondary, locale)}
+          </Link>
         </div>
 
         {/* Audience strip — who VNZ serves */}
@@ -142,21 +163,21 @@ export function Hero() {
           className="animate-hero-rise mt-10 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 font-pixel text-sm uppercase tracking-[0.18em] text-cream/75 sm:text-base"
           style={{ animationDelay: "0.4s" }}
         >
-          <span>Doanh nghiệp</span>
+          <span>{t(HERO.audienceBusiness, locale)}</span>
           <span className="text-gold/70">◆</span>
-          <span>Người dùng</span>
+          <span>{t(HERO.audienceUsers, locale)}</span>
           <span className="text-gold/70">◆</span>
-          <span>Khu vực công</span>
+          <span>{t(HERO.audiencePublic, locale)}</span>
         </div>
       </div>
 
       {/* Scroll cue */}
       <a
         href="#story"
-        aria-label="Cuộn để khám phá"
+        aria-label={t(HERO.scrollCue, locale)}
         className="absolute bottom-5 left-1/2 z-10 flex -translate-x-1/2 flex-col items-center gap-1 font-pixel text-xs uppercase tracking-[0.3em] text-cream/60 transition-colors hover:text-ember"
       >
-        Cuộn để khám phá
+        {t(HERO.scrollCue, locale)}
         <span className="animate-float text-lg leading-none">▾</span>
       </a>
 

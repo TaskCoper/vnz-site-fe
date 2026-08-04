@@ -51,7 +51,46 @@ Default body is `bg-sky font-mono text-ink` (set in `layout.tsx`); `ember` is th
 
 **The order is the argument.** Hero states the thesis; Story sets up the question (*tạo ra công nghệ ≠ sở hữu công nghệ* → *tại sao chưa có dấu ấn Việt Nam?* → the name); Way turns it into a way of working; Products is the proof; Team the people; Partners outside trust; Careers the invitation; Vision the last word, landing on the footer's "Press START". Moving a chapter breaks the argument — insert new ones at the seam where they earn their place and renumber the `Chapter` / `Headline` labels.
 
-`SiteNav` is the only **client** component on the page (scroll direction + menu overlay state). Everything else is server-rendered; the reveals are native CSS scroll-driven animations, not `IntersectionObserver`. Three lists must stay in step when chapters change: `NAV` in `site-nav.tsx`, `LINKS` in `site-footer.tsx`, and the sections mounted in `page.tsx` — an entry in either list that doesn't resolve to a mounted `id` is a dead anchor. (`#way` is deliberately not in `NAV`: it's the second half of the story, and listing it overflows the overlay on short viewports.)
+`SiteNav` is the only **client** component on the page (scroll direction + menu overlay state). Everything else is server-rendered; the reveals are native CSS scroll-driven animations, not `IntersectionObserver`.
+
+### Routes, and the no-anchors rule for navigation
+```
+/                     the homepage story
+/doi-ngu              the character-viewer roster
+/tin-tuc              news index      → /tin-tuc/<slug>      (SSG per post)
+/tuyen-dung           job list        → /tuyen-dung/<slug>   (SSG per role)
+/ung-tuyen            application form (dynamic — reads ?vi-tri=)
+/lien-he              contact form
+not-found.tsx         styled 404
+```
+**Every entry in `NAV` (`site-nav.tsx`) and `FOOTER_NAV` (`src/lib/site.ts`) must be a real route — never a `#` anchor.** Both lists were half homepage bookmarks (`/#story`, `/#products`, `/#partners`, `#contact`) and behaved differently depending on where you clicked them: on the homepage they scrolled, from a subpage they navigated home and dropped you mid-chapter. Keep the two lists in step.
+
+**Internal links use `next/link`, not `<a>`** — a bare anchor to a route forces a full document reload and drops the app shell. `<a href="#...">` is still correct for same-page scrolls (the hero's "Khám phá VNZ").
+
+That is why **the menu is short**. Câu chuyện, Dấu ấn VNZ and Đối tác are homepage chapters with no route of their own, so they aren't listed — the homepage is how you reach them. Routes for all three were built and then cut; don't re-add the labels pointing at `/#story` & co. A `#` target inside body copy is still fine (see the fallback CTA in `contact.tsx`) — the rule is about navigation entries.
+
+`#contact` on the footer and `#story` / `#products` / `#partners` on the homepage still exist as ids; nothing in the repo navigates to them. Every CTA (`APPLY_HREF` in `careers.ts`, the locked product's `href`, the Đối tác button, the nav CTA) points at `/lien-he`.
+
+### `/lien-he` — the enquiry form
+Two columns: `<ContactForm>` on the left, a `lg:sticky lg:self-start` info rail on the right (`self-start` is load-bearing — without it the aside stretches to the row height and sticky has nothing to travel through).
+
+**Field names live in `FIELDS` (`src/lib/contact-form.ts`) and are never typed as string literals.** Three parties must agree — the markup, the server action (`src/app/lien-he/actions.ts`), and the receiving endpoint — and a field renamed on one side only arrives *empty* on the other, which nobody notices until a real enquiry is lost. Validation is duplicated client-side for the typing experience but **the action is the one that counts**; an attacker posts straight to it.
+
+**Submission is one env var, `CONTACT_WEBHOOK_URL`** (see `.env.example`) — any endpoint that takes a JSON POST. **With it unset the action returns `unconfigured` and the form says so.** It never shows success over a message that went nowhere; don't "simplify" that branch away. Spam control is a `website` honeypot field, not a captcha — a filled one is dropped silently and reported as success.
+
+**`CONTACT` / `HOURS` / `SOCIALS` / `RESPONSE_TIME` in `src/lib/site.ts` all start empty**, and every block that renders them is conditional. That is the same "invent nothing" rule the footer runs on — don't replace the conditionals with plausible defaults; office hours and response times ship as facts.
+
+### `/tuyen-dung` + `/ung-tuyen` — two forms, not one
+`/ung-tuyen` is a **separate** application form (`src/lib/application-form.ts`, `src/app/ung-tuyen/actions.ts`), not a mode of the contact form. They were briefly merged and the seams showed: applicants read "ngân sách dự kiến" and had nowhere to put a CV. Same architecture as the contact form (server action, `FIELDS` as the shared field-name contract, honeypot, focused result banner) and its own webhook pair — `CAREERS_WEBHOOK_URL` falling back to `CONTACT_WEBHOOK_URL`.
+
+**No file upload**, deliberately: there is no object storage here, and a CV upload that drops the file is worse than none. `cvUrl` takes a link, validated as http(s) so a `javascript:` URL can't be stored and later clicked by a reviewer.
+
+**`?vi-tri=<slug>` is resolved against `ROLES`, never echoed.** An unknown slug falls back to no preselection, so the only text the page can display is a job title from this repo.
+
+The careers pages were a JRPG "class select" (`klass`, `sigil`, invented `stats` bars, duties behind `<details>`). All of that is deleted — see the note at the top of `careers.ts`. **No filter bar on the job list and no category filter on the blog**: three items don't justify a control that costs a click to reach what's already on screen — the same reasoning that killed the 3-logo marquee in `partners.tsx`. Build them on `searchParams` (not client state) when the lists outgrow a screen.
+
+### `/tin-tuc` — the blog
+Posts are **typed blocks**, not Markdown/MDX (`src/lib/posts.ts` → rendered by `post-body.tsx`). The renderer's switch is total, so a new block type fails the build rather than rendering nothing. Reading time and sort order are **derived**, never typed. **`date` on every post is a placeholder** pending real ones, and every body sentence is drawn from copy already in the repo — a company blog is the easiest place to publish something untrue by accident.
 
 - **`src/components/story-kit.tsx`** holds the pieces that make the chapters read as one document: `Chapter` (the gold "Chương 03 · Sản phẩm" label), `Headline` (label + title + lead, used by the grid chapters), `ActGap` (spacer between full-viewport beats), `Motes` (ambient embers), `Kinetic` (word-by-word scrubbed type). Reach for these before inventing a new section header.
 - **Content lives in `src/lib/`** — `members.ts`, `products.ts`, `partners.ts`, `careers.ts`, and `story.ts` (`ADMIRED` / `PILLARS` / `VALUES` for chapter 02). Edit copy there, not in components.

@@ -1,5 +1,6 @@
 
 import { StoryTruth } from "@/components/story-truth";
+import type { Locale } from "@/lib/i18n";
 
 /**
  * Chương 01 · Câu chuyện — VNZ's founding argument, told as three full-viewport
@@ -29,7 +30,7 @@ import { StoryTruth } from "@/components/story-truth";
  *
  * What is left here: the chapter-wide scanline wash and the trailing `ActGap`.
  */
-export function Story() {
+export function Story({ locale }: { locale: Locale }) {
   return (
     <section id="story" className="relative isolate w-full overflow-x-clip bg-ink">
       {/* Faint scanlines over the whole chapter. */}
@@ -38,7 +39,7 @@ export function Story() {
         className="pointer-events-none absolute inset-0 -z-10 opacity-30 mix-blend-multiply [background:repeating-linear-gradient(0deg,rgba(0,0,0,0.05)_0_1px,transparent_1px_3px)]"
       />
 
-      <StoryTruth />
+      <StoryTruth locale={locale} />
     </section>
   );
 }

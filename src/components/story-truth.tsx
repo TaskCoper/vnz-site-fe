@@ -5,6 +5,8 @@ import { useLayoutEffect, useRef } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { Meteors, Motes } from "@/components/story-kit";
+import { STORY } from "@/lib/dictionary";
+import { t, type Locale } from "@/lib/i18n";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -87,7 +89,25 @@ gsap.registerPlugin(ScrollTrigger);
  */
 const RUNWAY = "500svh";
 
-export function StoryTruth() {
+/**
+ * The bronze columns that framed the câu-hỏi beat are TEMPORARILY HIDDEN.
+ *
+ * Flip this back to `true` to restore them — that is the whole switch, and it is
+ * why they are behind a flag rather than deleted. Everything they need is still
+ * here: the markup below, the SWAP phase that flies them in from both edges, and
+ * the CLEAR phase that retreats them.
+ *
+ * NOTHING ELSE HAS TO CHANGE when this is false. Every tween that touches them is
+ * already guarded (`if (colL)` / `if (col)`) because `q()` returns null for an
+ * absent node, and the beats after them are scheduled at absolute timeline
+ * positions (`ASK = SWAP + 2`) rather than relative to the columns' arrival — so
+ * the act keeps its pacing with an empty stage instead of collapsing the gap.
+ * Don't "clean up" the guards while this is off; they are what makes the flag
+ * work.
+ */
+const SHOW_COLUMNS = false;
+
+export function StoryTruth({ locale }: { locale: Locale }) {
   const wrap = useRef<HTMLDivElement>(null);
   const stage = useRef<HTMLDivElement>(null);
 
@@ -259,44 +279,73 @@ export function StoryTruth() {
           aria-hidden
           className="pointer-events-none absolute inset-0 -z-10 overflow-hidden bg-ink"
         >
-          {/* Bronze columns. Held at 0.8 once landed: they are the brightest art
-              on the page and at full strength they out-shout the question they
-              frame. column.png's cloud capital fans RIGHT by nature, so the left
-              one stays natural and the right one is mirrored. */}
-          <div
-            data-col="l"
-            className="absolute -left-[7%] top-0 aspect-[739/1495] h-full opacity-80 max-sm:h-auto max-sm:w-[30vw]"
-          >
-            <Image
-              src="/general/about3/column-mono.png"
-              alt=""
-              fill
-              unoptimized
-              sizes="30vw"
-              className="pixelated object-contain object-left-top"
-            />
-          </div>
-          <div
-            data-col="r"
-            className="absolute -right-[7%] top-0 aspect-[739/1495] h-full -scale-x-100 opacity-80 max-sm:h-auto max-sm:w-[30vw]"
-          >
-            <Image
-              src="/general/about3/column-mono.png"
-              alt=""
-              fill
-              unoptimized
-              sizes="30vw"
-              className="pixelated object-contain object-left-top"
-            />
-          </div>
+          {/* Bronze columns — currently off; see `SHOW_COLUMNS` above.
+              Held at 0.8 once landed: they are the brightest art on the page and
+              at full strength they out-shout the question they frame.
+              column.png's cloud capital fans RIGHT by nature, so the left one
+              stays natural and the right one is mirrored. */}
+          {SHOW_COLUMNS ? (
+            <>
+              <div
+                data-col="l"
+                className="absolute -left-[7%] top-0 aspect-[739/1495] h-full opacity-80 max-sm:h-auto max-sm:w-[30vw]"
+              >
+                <Image
+                  src="/general/about3/column-mono.png"
+                  alt=""
+                  fill
+                  unoptimized
+                  sizes="30vw"
+                  className="pixelated object-contain object-left-top"
+                />
+              </div>
+              <div
+                data-col="r"
+                className="absolute -right-[7%] top-0 aspect-[739/1495] h-full -scale-x-100 opacity-80 max-sm:h-auto max-sm:w-[30vw]"
+              >
+                <Image
+                  src="/general/about3/column-mono.png"
+                  alt=""
+                  fill
+                  unoptimized
+                  sizes="30vw"
+                  className="pixelated object-contain object-left-top"
+                />
+              </div>
+            </>
+          ) : null}
 
-          {/* Việt Nam map — scales up behind the name. The responsive dimming
-              lives on the INNER div so the scale/opacity tween can't erase it. */}
+          {/* ══ BACKGROUND ART ══
+              The map and the skyline are SET INTO THE GROUND, not laid on top of
+              it. Both used to sit at or near full strength and read as two heavy
+              objects competing with the type — the client called it exactly that.
+              Three things push them back, and they work together:
+
+                1. LOW OPACITY. The map dropped from 40/70% to 16/26%, the
+                   skyline to 30%.
+                2. `saturate-[.55] contrast-[.85]`. Opacity alone leaves the gold
+                   still reading as gold, just fainter; pulling saturation and
+                   contrast down moves it toward the ink temperature so the eye
+                   files it as ground rather than as an object.
+                3. A GRADIENT MASK ON EACH. This is what actually sells it — art
+                   that stops at a hard edge always reads as a pasted rectangle
+                   no matter how faint. The map dissolves at top and bottom, the
+                   skyline dissolves upward out of the floor.
+
+              NO BLUR, deliberately: every asset here is pixel art rendered with
+              `image-rendering: pixelated`, and blurring it fights the entire
+              visual language of the site.
+
+              ALL OF IT LIVES ON THE INNER DIV. GSAP animates the OUTER
+              `data-map` / `data-city` element's opacity to 1, so anything put
+              there is erased the moment the tween runs — which is precisely how
+              the skyline ended up at full strength. If these need to go fainter
+              still, the numbers below are the dial; don't move them outward. */}
           <div
             data-map
             className="absolute left-1/2 top-[5%] aspect-[962/1377] h-[58%] -translate-x-1/2"
           >
-            <div className="relative h-full w-full opacity-40 sm:opacity-70">
+            <div className="relative h-full w-full opacity-[0.16] saturate-[.55] contrast-[.85] [mask-image:linear-gradient(to_bottom,transparent,#000_22%,#000_72%,transparent)] sm:opacity-[0.26]">
               <Image
                 src="/general/about4/vietnam-mono.png"
                 alt=""
@@ -308,19 +357,22 @@ export function StoryTruth() {
             </div>
           </div>
 
-          {/* Gold skyline — rises in from under the bottom edge. */}
+          {/* Gold skyline — rises in from under the bottom edge, then settles
+              into the floor rather than standing on it. */}
           <div
             data-city
             className="absolute bottom-0 left-0 aspect-[2138/589] w-full"
           >
-            <Image
-              src="/general/about4/city-mono.png"
-              alt=""
-              fill
-              unoptimized
-              sizes="100vw"
-              className="pixelated object-contain object-bottom"
-            />
+            <div className="relative h-full w-full opacity-30 saturate-[.55] contrast-[.85] [mask-image:linear-gradient(to_top,#000_18%,transparent)]">
+              <Image
+                src="/general/about4/city-mono.png"
+                alt=""
+                fill
+                unoptimized
+                sizes="100vw"
+                className="pixelated object-contain object-bottom"
+              />
+            </div>
           </div>
 
           {/* `data-namebg` used to hold an ink radial scrim here, to push the map
@@ -341,7 +393,7 @@ export function StoryTruth() {
             className="inline-flex items-center gap-3 font-pixel text-sm uppercase tracking-[0.35em] text-gold sm:text-base"
           >
             <span aria-hidden className="h-px w-8 bg-gold/40 sm:w-12" />
-            Câu chuyện VNZ
+            {t(STORY.chapter, locale)}
             <span aria-hidden className="h-px w-8 bg-gold/40 sm:w-12" />
           </span>
 
@@ -349,16 +401,16 @@ export function StoryTruth() {
             data-r="2"
             className="mt-7 font-pixel text-sm uppercase tracking-[0.4em] text-cream/70 sm:text-base"
           >
-            Một sự thật chúng tôi nhận ra
+            {t(STORY.truthLabel, locale)}
           </p>
 
           <div className="mt-8 flex flex-col items-center justify-center gap-3 font-pixel uppercase leading-[0.82] sm:flex-row sm:gap-7">
             <span className="text-[clamp(2.5rem,8.5vw,7.5rem)] text-cream">
               <span data-r="3" className="block">
-                Tạo ra
+                {t(STORY.createLine1, locale)}
               </span>
               <span data-r="4" className="block">
-                công nghệ
+                {t(STORY.createLine2, locale)}
               </span>
             </span>
 
@@ -372,10 +424,10 @@ export function StoryTruth() {
 
             <span className="text-[clamp(2.5rem,8.5vw,7.5rem)] text-terracotta">
               <span data-r="5" className="block">
-                Sở hữu
+                {t(STORY.ownLine1, locale)}
               </span>
               <span data-r="6" className="block">
-                công nghệ
+                {t(STORY.ownLine2, locale)}
               </span>
             </span>
           </div>
@@ -384,9 +436,7 @@ export function StoryTruth() {
             data-r="8"
             className="mx-auto mt-12 max-w-2xl font-viet text-base font-light leading-relaxed text-cream/70 sm:text-lg"
           >
-            Một quốc gia có thể sở hữu hàng triệu kỹ sư tài năng. Nhưng chỉ khi
-            tạo ra những sản phẩm, nền tảng và giải pháp của riêng mình, quốc gia
-            đó mới thực sự để lại dấu ấn trên bản đồ công nghệ thế giới.
+            {t(STORY.truthBody, locale)}
           </p>
         </div>
 
@@ -406,10 +456,10 @@ export function StoryTruth() {
           </span>
           <p className="-mt-4 mx-auto max-w-4xl font-pixel uppercase leading-[0.85] text-cream sm:-mt-6">
             <span data-q className="block text-[clamp(1.6rem,4.6vw,3.5rem)]">
-              Nếu người Việt đủ năng lực
+              {t(STORY.questionLine1, locale)}
             </span>
             <span data-q className="block text-[clamp(1.6rem,4.6vw,3.5rem)]">
-              xây dựng công nghệ cho thế giới —
+              {t(STORY.questionLine2, locale)}
             </span>
             {/* The drop shadow was a WHITE ridge for the paper ground; on ink it
                 has to be a dark one or the type grows a glowing outline. */}
@@ -417,15 +467,17 @@ export function StoryTruth() {
               data-q
               className="mt-4 block text-[clamp(2.25rem,7vw,6rem)] leading-[0.85] text-sunset [text-shadow:0_2px_0_rgba(0,0,0,0.55)]"
             >
-              tại sao chưa có dấu ấn{" "}
-              <span className="whitespace-nowrap">Việt Nam?</span>
+              {t(STORY.questionAccentA, locale)}{" "}
+              <span className="whitespace-nowrap">
+                {t(STORY.questionAccentB, locale)}
+              </span>
             </span>
           </p>
           <p
             data-q
             className="mt-12 font-pixel text-sm uppercase tracking-[0.35em] text-gold"
           >
-            Đó là điều đã thôi thúc VNZ ra đời
+            {t(STORY.questionFooter, locale)}
           </p>
         </div>
 
@@ -436,7 +488,7 @@ export function StoryTruth() {
             data-n
             className="font-pixel text-sm uppercase tracking-[0.4em] text-cream/70"
           >
-            Đó cũng là ý nghĩa cái tên
+            {t(STORY.nameLabel, locale)}
           </span>
           {/* NO `filter:` ON THIS ELEMENT. It carried a
               `drop-shadow(0 6px 30px rgba(232,84,31,.4))` glow, which rendered as
@@ -451,16 +503,14 @@ export function StoryTruth() {
             data-n
             className="mx-auto mt-5 max-w-5xl bg-gradient-to-br from-clay via-ember to-lantern bg-clip-text font-pixel text-[clamp(2.25rem,8vw,7rem)] uppercase leading-[0.84] text-transparent"
           >
-            Vietnam Z-DNA
+            {t(STORY.nameBrand, locale)}
           </h3>
           <p
             data-n
             className="mx-auto mt-8 max-w-3xl font-viet text-base font-light leading-relaxed text-cream/70 sm:text-lg"
           >
-            <span className="text-gold">Vietnam Z-DNA Technology</span> — DNA của
-            một thế hệ người Việt lớn lên trong thời đại số, mang trong mình khát
-            vọng làm chủ công nghệ, tạo ra giá trị bằng công nghệ và ghi dấu ấn
-            của riêng mình trên bản đồ công nghệ thế giới.
+            <span className="text-gold">{t(STORY.nameBodyLead, locale)}</span>
+            {t(STORY.nameBody, locale)}
           </p>
         </div>
       </div>

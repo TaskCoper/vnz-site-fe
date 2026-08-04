@@ -509,6 +509,72 @@ html {
       0 0 0 6px var(--color-cream),
       2px 2px 0 6px rgba(15, 20, 32, 0.45);
   }
+  /* Form control on the ivory ground — the `/lien-he` enquiry form.
+     Squared off like everything else here (`border-radius: 0`), sitting a shade
+     brighter than `.paper` so a field reads as a slot cut into the sheet.
+
+     ONE CLASS FOR input / select / textarea on purpose: three near-identical
+     rules drift apart, and the focus ring is the thing that must never differ
+     between them. Height differences come from the element, not from here.
+
+     THE FOCUS RING IS A `box-shadow`, NOT AN `outline`. `outline` follows the
+     border-radius, which is 0 here, so it lands as a hairline the same colour
+     family as the border and is easy to miss on a pale field; the ember halo is
+     visible at a glance and is the only keyboard affordance this form has.
+     Never replace it with `outline: none` alone. */
+  .pixel-input {
+    width: 100%;
+    border-radius: 0;
+    border: 1px solid color-mix(in oklab, var(--color-ink) 18%, transparent);
+    background-color: #fffefb;
+    padding: 0.7rem 0.85rem;
+    font-family: var(--font-viet);
+    font-weight: 300;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: var(--color-ink);
+    transition:
+      border-color 0.2s,
+      box-shadow 0.2s;
+  }
+  .pixel-input::placeholder {
+    color: color-mix(in oklab, var(--color-ink-soft) 60%, transparent);
+  }
+  .pixel-input:focus-visible {
+    outline: none;
+    border-color: var(--color-ember);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-ember) 22%, transparent);
+  }
+  /* `:user-invalid`, NOT `:invalid`. `:invalid` matches an empty required field
+     from first paint, so the whole form loads pre-painted red before anyone has
+     typed a character. `:user-invalid` waits until the field has actually been
+     interacted with or submitted. */
+  .pixel-input:user-invalid {
+    border-color: var(--color-lantern);
+  }
+  .pixel-input[aria-invalid="true"] {
+    border-color: var(--color-lantern);
+  }
+  .pixel-input:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+  }
+  /* Native select arrows are chrome-coloured and rounded on every platform, and
+     one of them in a row of square fields is all it takes to break the look.
+     `appearance: none` plus a drawn chevron; the right padding is what keeps
+     long option text off it. */
+  select.pixel-input {
+    appearance: none;
+    padding-right: 2.4rem;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 6 6.5l5-5' fill='none' stroke='%2346506a' stroke-width='1.8'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.9rem center;
+  }
+  textarea.pixel-input {
+    resize: vertical;
+    min-height: 9rem;
+  }
+
   /* NES-style segmented stat bar. Fill width is driven by --val and only
      expands once the card scrolls into view (.is-visible). */
   .statbar {

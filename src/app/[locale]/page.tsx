@@ -1,4 +1,6 @@
 import ClickSpark from "@/components/bits/ClickSpark";
+import { t, type Locale } from "@/lib/i18n";
+import { META } from "@/lib/dictionary";
 import { SiteNav } from "@/components/site-nav";
 import { Hero } from "@/components/hero";
 import { Story } from "@/components/story";
@@ -44,18 +46,24 @@ import { SiteFooter } from "@/components/site-footer";
  *
  * `ClickSpark` renders a full-bleed fixed canvas, so it must stay outermost.
  */
-export default function Home() {
+export default async function Home({
+  params,
+}: {
+  params: Promise<{ locale: Locale }>;
+}) {
+  const { locale } = await params;
+
   return (
     <ClickSpark sparkColor="#e8541f" sparkSize={9} sparkRadius={22} sparkCount={8} duration={420}>
       <div className="relative bg-ink">
-        <SiteNav />
+        <SiteNav locale={locale} />
         <main>
-          <Hero />
-          <Story />
-          <Products />
-          <Partners />
+          <Hero locale={locale} />
+          <Story locale={locale} />
+          <Products locale={locale} />
+          <Partners locale={locale} />
         </main>
-        <SiteFooter />
+        <SiteFooter locale={locale} />
       </div>
     </ClickSpark>
   );

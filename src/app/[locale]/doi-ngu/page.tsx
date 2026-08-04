@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { t, type Locale } from "@/lib/i18n";
+import { META } from "@/lib/dictionary";
 import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
 import { Member } from "@/components/member";
@@ -26,20 +28,32 @@ import { Member } from "@/components/member";
  * page and anything stacked over its top-left corner competes with the character.
  * The nav's logo and menu already lead back home.
  */
-export const metadata: Metadata = {
-  title: "Đội ngũ — VNZ",
-  description:
-    "11 thành viên từ 11 vùng quê Việt Nam — những người bắt đầu VNZ, Vietnam Z-DNA Technology.",
-};
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: Locale }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  return {
+    title: t(META.teamTitle, locale),
+    description: t(META.teamDescription, locale),
+  };
+}
 
-export default function DoiNguPage() {
+export default async function DoiNguPage({
+  params,
+}: {
+  params: Promise<{ locale: Locale }>;
+}) {
+  const { locale } = await params;
+
   return (
     <div className="relative bg-ink">
-      <SiteNav tone="dark" />
+      <SiteNav locale={locale} tone="dark" />
       <main>
-        <Member />
+        <Member locale={locale} />
       </main>
-      <SiteFooter />
+      <SiteFooter locale={locale} />
     </div>
   );
 }

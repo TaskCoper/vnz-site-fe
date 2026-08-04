@@ -1,4 +1,5 @@
 import type { StaticImageData } from "next/image";
+import type { L } from "@/lib/i18n";
 
 // Product art lives in /public/products/<slug>/. The *-trim.png variants are the
 // originals cropped to their alpha bounding box (see scripts/trim.py) so they sit
@@ -23,20 +24,20 @@ import taskcoperText from "../../public/products/taskcoper/text-trim.png";
  * `stat`s reuse the NES-style `.statbar` primitive — playful "product DNA"
  * meters in keeping with the JRPG character-sheet aesthetic.
  */
-export type ProductStat = { label: string; value: number };
+export type ProductStat = { label: L; value: number };
 
 export type Product = {
   slug: string;
   name: string; // ASCII brand short-name (pixel fonts / alt text)
-  category: string; // eyebrow — e.g. "Thời trang · AI"
-  status: string; // gaming status pill — e.g. "Bản thử nghiệm"
+  category: L; // eyebrow — e.g. "Thời trang · AI"
+  status: L; // status pill — e.g. "Sắp ra mắt"
   // Public detail copy. OMITTED on purpose for `locked` products: the real text
   // must never reach the browser (not in the DOM, not in the JS bundle), so a
   // locked product ships nothing here and the panel renders a blurred placeholder
   // skeleton instead. Keep the real draft in a code comment (stripped at build).
-  tagline?: string; // big headline line (Vietnamese)
-  desc?: string; // supporting paragraph (Vietnamese)
-  features?: string[]; // 3–4 short capability bullets (Vietnamese)
+  tagline?: L; // big headline line
+  desc?: L; // supporting paragraph
+  features?: L<string[]>; // 3–4 short capability bullets
   stats?: ProductStat[]; // "product DNA" stat bars
   tint: string; // CSS palette-token reference, e.g. "var(--color-violet)"
   logo: StaticImageData; // square app-icon / box mark
@@ -45,8 +46,10 @@ export type Product = {
   wordmarkClass?: string; // optional Tailwind height for the wordmark (defaults
   // to "h-9 w-auto sm:h-11" in the component) — wordmarks have different aspect
   // ratios, so some need to run larger to read at the same visual weight.
-  cta: string; // "play" button label (Vietnamese)
-  href: string; // CTA target — routes interest to #contact until products are live
+  cta: L; // CTA button label
+  // CTA target. An INTERNAL path here is locale-free (`/lien-he`) and the
+  // component runs it through `localePath()`; an external URL is used as-is.
+  href: string;
   locked?: boolean; // unreleased → blur the detail block behind a "Sắp ra mắt"
   // lock so the specifics stay hidden. Brand art, name, status + CTA still show
   // (teaser). Flip to false (or remove) when the product launches.
@@ -56,8 +59,11 @@ export const PRODUCTS: Product[] = [
   {
     slug: "stylaibox",
     name: "StylaiBox",
-    category: "Thời trang · Trí tuệ nhân tạo",
-    status: "Sắp ra mắt",
+    category: {
+      vi: "Thời trang · Trí tuệ nhân tạo",
+      en: "Fashion · Artificial intelligence",
+    },
+    status: { vi: "Sắp ra mắt", en: "Coming soon" },
     // 🔒 LOCKED (chưa ra mắt). tagline/desc/features/stats are deliberately
     // omitted so the real copy NEVER ships to the browser (no DOM, no JS
     // bundle) — the panel renders a blurred placeholder skeleton instead.
@@ -78,34 +84,51 @@ export const PRODUCTS: Product[] = [
     logo: stylaiLogo,
     logoRatio: "749 / 889",
     wordmark: stylaiText,
-    cta: "Nhận tin ra mắt",
-    href: "#contact",
+    cta: { vi: "Nhận tin ra mắt", en: "Get launch updates" },
+    href: "/lien-he",
     locked: true, // chưa ra mắt — làm mờ phần thông tin chi tiết
   },
   {
     slug: "taskcoper",
     name: "TaskCoper",
-    category: "Năng suất · Quản lý công việc",
-    status: "Bản chính thức",
-    tagline: "Chinh phục mọi công việc, từng nhiệm vụ một",
-    desc: "TaskCoper biến mớ công việc hỗn độn thành một hành trình rõ ràng — lập kế hoạch, chia nhỏ nhiệm vụ và theo dõi tiến độ của cả nhóm trong cùng một không gian duy nhất.",
-    features: [
-      "Quản lý nhiệm vụ & dự án một cách trực quan",
-      "Cộng tác nhóm theo thời gian thực",
-      "Theo dõi tiến độ bằng bảng & biểu đồ",
-      "Nhắc việc thông minh, không bỏ lỡ deadline",
-    ],
+    category: {
+      vi: "Năng suất · Quản lý công việc",
+      en: "Productivity · Work management",
+    },
+    status: { vi: "Bản chính thức", en: "Generally available" },
+    tagline: {
+      vi: "Chinh phục mọi công việc, từng nhiệm vụ một",
+      en: "Take on any workload, one task at a time",
+    },
+    desc: {
+      vi: "TaskCoper biến mớ công việc hỗn độn thành một hành trình rõ ràng — lập kế hoạch, chia nhỏ nhiệm vụ và theo dõi tiến độ của cả nhóm trong cùng một không gian duy nhất.",
+      en: "TaskCoper turns a tangle of work into a clear path — plan it, break it into tasks, and follow the whole team's progress in a single space.",
+    },
+    features: {
+      vi: [
+        "Quản lý nhiệm vụ & dự án một cách trực quan",
+        "Cộng tác nhóm theo thời gian thực",
+        "Theo dõi tiến độ bằng bảng & biểu đồ",
+        "Nhắc việc thông minh, không bỏ lỡ deadline",
+      ],
+      en: [
+        "Visual task and project management",
+        "Real-time collaboration across the team",
+        "Track progress with boards and charts",
+        "Smart reminders so deadlines don't slip",
+      ],
+    },
     stats: [
-      { label: "Tốc độ", value: 92 },
-      { label: "Cộng tác", value: 89 },
-      { label: "Tổ chức", value: 95 },
+      { label: { vi: "Tốc độ", en: "Speed" }, value: 92 },
+      { label: { vi: "Cộng tác", en: "Collaboration" }, value: 89 },
+      { label: { vi: "Tổ chức", en: "Organisation" }, value: 95 },
     ],
     tint: "var(--color-azure)",
     logo: taskcoperLogo,
     logoRatio: "1049 / 1072",
     wordmark: taskcoperText,
     wordmarkClass: "h-14 w-auto sm:h-20", // runs larger than StylaiBox's lockup
-    cta: "Trải nghiệm thử",
+    cta: { vi: "Trải nghiệm thử", en: "Try it out" },
     href: "https://taskcoper.com",
   },
 ];

@@ -1,263 +1,229 @@
-import { ActGap, Headline } from "@/components/story-kit";
-import { APPLY_HREF, PERKS, ROLES, STEPS } from "@/lib/careers";
+import Link from "next/link";
+import { PERKS, ROLES, STEPS, applyPath } from "@/lib/careers";
+import { CAREERS_UI } from "@/lib/dictionary";
+import { localePath, t, type Locale } from "@/lib/i18n";
 
 /**
- * Chương 06 · Tuyển dụng — the invitation, framed as a JRPG "class select":
- * every open position is a playable class you can pick to join the party. The
- * framing is not decoration, it is the honest pitch — these are internships, so
- * what we can promise is a class, a skill tree and real quests, not a title.
+ * `/tuyen-dung` — the job list, built the way a careers page is built.
  *
- * Copy lives in `src/lib/careers.ts`; each role's `tint` recolours its whole card
- * through the `--tint` var (sigil stage, accent bar, tags, stat bars). `klass` and
- * `sigil` are ASCII because they feed the pixel display face; every Vietnamese
- * string renders in `font-viet` / `font-pixel`.
+ * IT WAS A JRPG "CLASS SELECT": three cards, each with a big ASCII monogram on a
+ * glowing stage, an invented four-bar attribute sheet, and duties hidden behind
+ * `<details>` toggles. That framing was cut. A careers page has exactly one job —
+ * help someone decide whether to apply — and every one of those elements worked
+ * against it: the monogram took the space the job title should have had, the stat
+ * bars put made-up numbers next to a real position, and collapsing "Nhiệm vụ" and
+ * "Yêu cầu" hid the two things the reader came for behind a click each.
  *
- * The `stats` bars are flavour, not literal metrics — they read as a class sheet.
- * Duties / requirements sit in native `<details>` so a visitor can scan five roles
- * without a wall of text, and it still needs no client JS.
+ * WHAT IT IS NOW: a scannable list of open roles, each linking to a full job
+ * description at `/tuyen-dung/<slug>`. Everything needed to triage a role — title,
+ * department, employment type, level, headcount, one-line summary, stack — is on
+ * the row itself, so nobody opens a detail page to find out it wasn't for them.
+ *
+ * NO FILTER BAR, and that is deliberate rather than unfinished. Three roles fit on
+ * one screen; a department/type filter over three items is the same mistake as a
+ * marquee over three logos (see the long note in `partners.tsx`) — the control
+ * advertises a volume that isn't there and costs a click to reach what was already
+ * visible. Add filters when the list stops fitting on a screen, and build them on
+ * `searchParams` rather than client state so a filtered view stays linkable.
+ *
+ * Server component. Reveals are the native CSS scroll primitives (`.s-*`); no
+ * client JS, and the `<details>` elements are gone with the card design.
  */
-const TITLE = (
-  <>
-    Chọn <span className="text-clay">lớp nhân vật</span> của bạn
-  </>
-);
-
-const LEAD = (
-  <>
-    VNZ đang ở chương đầu tiên. Nếu bạn muốn có tên trong những dòng đầu của câu
-    chuyện này, đây là chỗ để bắt đầu.
-  </>
-);
-
-/**
- * Lives on its own route (`/tuyen-dung`), not as a homepage chapter — five roles
- * with duties and requirements is a destination, and inlining it buried the
- * closing Tầm nhìn beat under a wall of `<details>`.
- *
- * `standalone` (the default) renders a page header. Passing `standalone={false}`
- * restores the numbered-chapter framing, so the block can be dropped back into
- * the homepage story without a rewrite.
- */
-export function Careers({ standalone = true }: { standalone?: boolean } = {}) {
+export function Careers({ locale }: { locale: Locale }) {
   const slots = ROLES.reduce((n, r) => n + r.slots, 0);
+
+  // Grouped by team, because that is how someone scans a job list — they are
+  // looking for their own discipline first. Derived from the data, so a new
+  // department appears on its own the moment a role carries it.
+  // Grouped by the VIETNAMESE department name, which is the stable key — grouping
+  // on the active language would silently re-shuffle the page between locales.
+  const departments = [...new Set(ROLES.map((r) => r.department.vi))];
 
   return (
     <section
       id="careers"
       className="relative isolate w-full overflow-x-clip paper py-24 sm:py-28"
     >
-      {standalone ? (
-        <header className="mx-auto max-w-3xl px-5 text-center sm:px-8">
-          <span className="s-fade inline-flex items-center gap-3 font-pixel text-sm uppercase tracking-[0.35em] text-clay sm:text-base">
-            Tuyển dụng
-          </span>
-          <h1 className="s-rise mt-5 font-pixel text-[clamp(2rem,6vw,4.25rem)] uppercase leading-[0.9] text-ink">
-            {TITLE}
-          </h1>
-          <p className="s-fade mx-auto mt-6 max-w-2xl font-viet text-base font-light leading-relaxed text-ink-soft sm:text-lg">
-            {LEAD}
-          </p>
-        </header>
-      ) : (
-        <Headline label="Tuyển dụng" title={TITLE} lead={LEAD} />
-      )}
+      {/* Blueprint grid — same 56px / 5% as every other paper surface. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 -z-10 [background:repeating-linear-gradient(0deg,rgba(21,22,26,0.05)_0_1px,transparent_1px_56px),repeating-linear-gradient(90deg,rgba(21,22,26,0.05)_0_1px,transparent_1px_56px)] [mask-image:radial-gradient(80%_70%_at_50%_50%,#000_35%,transparent_100%)]"
+      />
 
-      {/* Party status + perks. */}
-      <div className="s-fade mx-auto mt-8 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 font-pixel text-sm uppercase tracking-[0.2em] text-ink-soft sm:text-base">
-        <span className="text-ember">{slots} suất đang mở</span>
-        <span aria-hidden className="text-clay/80">
-          ◆
+      {/* Left-aligned, like `/lien-he` and unlike the homepage chapters: the body
+          below is a left-aligned list, and a centred title over it leaves the eye
+          starting in the middle and jumping left for every row. */}
+      <header className="mx-auto max-w-6xl px-5 sm:px-8">
+        <span className="s-fade inline-flex items-center gap-3 font-pixel text-sm uppercase tracking-[0.35em] text-clay sm:text-base">
+          {t(CAREERS_UI.label, locale)}
         </span>
-        <span>{ROLES.length} lớp nhân vật</span>
-      </div>
+        <h1 className="s-rise mt-4 max-w-3xl font-pixel text-[clamp(2rem,6vw,4.25rem)] uppercase leading-[0.9] text-ink">
+          {t(CAREERS_UI.titleA, locale)}{" "}
+          <span className="text-clay">{t(CAREERS_UI.titleAccent, locale)}</span>
+          {t(CAREERS_UI.titleB, locale)}
+        </h1>
+        <p className="s-fade mt-6 max-w-2xl font-viet text-base font-light leading-relaxed text-ink-soft sm:text-lg">
+          {t(CAREERS_UI.lead, locale)}
+        </p>
 
-      <ul className="s-fade mx-auto mt-8 flex max-w-4xl flex-wrap items-center justify-center gap-2.5 px-5 sm:px-8">
-        {PERKS.map((p) => (
-          <li
-            key={p.label}
-            className="inline-flex items-center gap-2 border border-ink/15 paper-card px-3.5 py-2 font-viet text-xs font-light text-ink-soft backdrop-blur-sm sm:text-sm"
-          >
-            <span aria-hidden className="text-clay">
-              {p.glyph}
-            </span>
-            {p.label}
-          </li>
-        ))}
-      </ul>
-
-      {/* ── Class cards ── */}
-      <div className="mx-auto mt-14 grid max-w-7xl grid-cols-1 gap-5 px-5 sm:px-8 lg:grid-cols-3">
-        {ROLES.map((r) => (
-          <article
-            key={r.slug}
-            style={{ ["--tint" as string]: r.tint }}
-            className="s-rise group relative flex h-full flex-col overflow-hidden border border-ink/15 paper-card backdrop-blur-md transition-colors duration-300 hover:border-[color:var(--tint)]"
-          >
-            <span
-              aria-hidden
-              className="absolute inset-x-0 top-0 h-[3px] bg-[color:var(--tint)] [box-shadow:0_0_16px_var(--tint)]"
-            />
-
-            {/* Sigil stage — the class monogram, drawn big. */}
-            <div className="relative flex h-32 items-center justify-center overflow-hidden border-b border-ink/15">
-              <div
-                aria-hidden
-                className="animate-pulse-glow pointer-events-none absolute inset-0 opacity-45 [background:radial-gradient(55%_75%_at_50%_60%,var(--tint),transparent_70%)]"
-              />
-              <span
-                aria-hidden
-                className="relative font-pixel text-6xl uppercase leading-none text-ink transition-transform duration-500 group-hover:scale-110 [text-shadow:0_0_24px_var(--tint)]"
-              >
-                {r.sigil}
-              </span>
-              <span className="absolute right-3 top-3 border border-[color:var(--tint)]/50 bg-white/90 px-2 py-1 font-pixel text-xs uppercase leading-none tracking-[0.15em] tint-text">
-                {r.slots} suất
-              </span>
-            </div>
-
-            <div className="flex flex-1 flex-col p-5">
-              <span className="font-pixel text-sm uppercase tracking-[0.25em] tint-text">
-                {r.klass}
-              </span>
-              <h3 className="mt-2 font-viet text-lg font-semibold leading-tight text-ink">
-                {r.role}
-              </h3>
-              <div className="mt-3 flex flex-wrap gap-2 font-pixel text-xs uppercase tracking-[0.15em] text-ink-soft">
-                <span className="border border-ink/15 px-2 py-1">{r.type}</span>
-                <span className="border border-ink/15 px-2 py-1">{r.level}</span>
-              </div>
-
-              <p className="mt-4 font-viet text-sm font-light leading-relaxed text-ink-soft">
-                {r.summary}
-              </p>
-
-              {/* Class attributes. */}
-              <dl className="mt-5 space-y-2">
-                {r.stats.map((s, i) => (
-                  <div key={s.label} className="flex items-center gap-3">
-                    <dt className="w-24 shrink-0 font-pixel text-xs uppercase tracking-[0.12em] text-ink-soft">
-                      {s.label}
-                    </dt>
-                    <dd className="flex-1">
-                      <div
-                        className="statbar is-scrub"
-                        role="meter"
-                        aria-valuenow={s.value}
-                        aria-valuemin={0}
-                        aria-valuemax={100}
-                        aria-label={s.label}
-                        style={{
-                          ["--val" as string]: `${s.value}%`,
-                          ["--c" as string]: r.tint,
-                          ["--delay" as string]: `${i * 0.1}s`,
-                        }}
-                      >
-                        <span className="fill block" />
-                      </div>
-                    </dd>
-                  </div>
-                ))}
-              </dl>
-
-              {/* Skill tree. */}
-              <ul className="mt-5 flex flex-wrap gap-2">
-                {r.stack.map((t) => (
-                  <li
-                    key={t}
-                    className="border border-ink/15 bg-white/80 px-2.5 py-1 font-mono text-[11px] text-ink-soft"
-                  >
-                    {t}
-                  </li>
-                ))}
-              </ul>
-
-              {/* Quest details. */}
-              <div className="mt-5 divide-y divide-cream/10 border-y border-ink/15">
-                <details className="group/d py-3">
-                  <summary className="flex cursor-pointer items-center justify-between gap-3 font-pixel text-sm uppercase tracking-[0.15em] text-ink-soft transition-colors hover:text-ember [&::-webkit-details-marker]:hidden">
-                    Nhiệm vụ
-                    <span
-                      aria-hidden
-                      className="tint-text transition-transform duration-300 group-open/d:rotate-45"
-                    >
-                      ＋
-                    </span>
-                  </summary>
-                  <ul className="mt-3 space-y-2">
-                    {r.duties.map((d) => (
-                      <li
-                        key={d}
-                        className="flex gap-2 font-viet text-sm font-light leading-snug text-ink-soft"
-                      >
-                        <span
-                          aria-hidden
-                          className="mt-[2px] tint-text"
-                        >
-                          ▸
-                        </span>
-                        {d}
-                      </li>
-                    ))}
-                  </ul>
-                </details>
-
-                <details className="group/d py-3">
-                  <summary className="flex cursor-pointer items-center justify-between gap-3 font-pixel text-sm uppercase tracking-[0.15em] text-ink-soft transition-colors hover:text-ember [&::-webkit-details-marker]:hidden">
-                    Yêu cầu
-                    <span
-                      aria-hidden
-                      className="tint-text transition-transform duration-300 group-open/d:rotate-45"
-                    >
-                      ＋
-                    </span>
-                  </summary>
-                  <ul className="mt-3 space-y-2">
-                    {r.requirements.map((q) => (
-                      <li
-                        key={q}
-                        className="flex gap-2 font-viet text-sm font-light leading-snug text-ink-soft"
-                      >
-                        <span
-                          aria-hidden
-                          className="mt-[2px] tint-text"
-                        >
-                          ▸
-                        </span>
-                        {q}
-                      </li>
-                    ))}
-                  </ul>
-                </details>
-              </div>
-
-              <div className="mt-auto pt-6">
-                <a
-                  href={APPLY_HREF}
-                  className="inline-flex w-full items-center justify-center gap-2 border-2 border-ink/30 px-5 py-3 font-pixel text-base uppercase tracking-[0.12em] text-ink transition-colors duration-200 hover:border-ember hover:bg-ink/5 hover:text-ember"
-                >
-                  Ứng tuyển <span aria-hidden>▸</span>
-                </a>
-              </div>
-            </div>
-          </article>
-        ))}
-      </div>
-
-      {/* ── Quest path — how the process runs ── */}
-      <div className="mx-auto mt-20 max-w-6xl px-5 sm:px-8">
-        <div className="s-rise text-center">
-          <span className="font-pixel text-sm uppercase tracking-[0.4em] text-clay">
-            Hành trình ứng tuyển
+        {/* Counts derived, never typed, so they cannot go stale when a role is
+            added or filled. */}
+        <div className="s-fade mt-7 flex flex-wrap items-center gap-x-4 gap-y-2 font-pixel text-sm uppercase tracking-[0.2em] text-ink-soft sm:text-base">
+          <span className="text-ember">
+            {ROLES.length} {t(CAREERS_UI.openRoles, locale)}
           </span>
-          <h3 className="mt-3 font-pixel text-[clamp(1.6rem,4vw,2.75rem)] uppercase tracking-wide text-ink">
-            Bốn bước để nhập cuộc
-          </h3>
+          <span aria-hidden className="text-clay/60">
+            ·
+          </span>
+          <span>
+            {slots} {t(CAREERS_UI.headcount, locale)}
+          </span>
         </div>
+      </header>
 
-        <ol className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {/* ── Job list ── */}
+      <div className="mx-auto mt-14 max-w-6xl px-5 sm:px-8">
+        {departments.map((dept) => (
+          <div key={dept} className="mb-12 last:mb-0">
+            <h2 className="font-pixel text-sm uppercase tracking-[0.3em] text-clay">
+              {t(ROLES.find((r) => r.department.vi === dept)!.department, locale)}
+              <span className="ml-3 text-ink-soft/70">
+                {ROLES.filter((r) => r.department.vi === dept).length}{" "}
+                {t(CAREERS_UI.rolesInDept, locale)}
+              </span>
+            </h2>
+
+            <ul className="mt-5 flex flex-col gap-4">
+              {ROLES.filter((r) => r.department.vi === dept).map((r) => (
+                <li
+                  key={r.slug}
+                  style={{ ["--tint" as string]: r.tint }}
+                  className="s-rise group relative border border-ink/15 paper-card backdrop-blur-md transition-colors duration-300 hover:border-[color:var(--tint)]"
+                >
+                  <span
+                    aria-hidden
+                    className="absolute inset-y-0 left-0 w-[3px] bg-[color:var(--tint)]"
+                  />
+
+                  <div className="flex flex-col gap-5 p-6 sm:p-7 lg:flex-row lg:items-center lg:justify-between lg:gap-8">
+                    <div className="min-w-0">
+                      {/* THE TITLE IS THE LINK, and the whole row is not. A
+                          card-wide anchor swallows the "Ứng tuyển" button inside
+                          it — nested interactive elements are invalid, and the
+                          button stops being separately reachable by keyboard.
+                          `after:absolute inset-0` instead stretches the title's
+                          hit area over the card while leaving the button a real
+                          sibling above it (`relative z-10`). */}
+                      <h3 className="font-viet text-lg font-semibold leading-snug text-ink sm:text-xl">
+                        <Link
+                          href={localePath(`/tuyen-dung/${r.slug}`, locale)}
+                          className="transition-colors duration-200 after:absolute after:inset-0 after:content-[''] group-hover:text-ember"
+                        >
+                          {t(r.role, locale)}
+                        </Link>
+                      </h3>
+
+                      {/* Meta row — everything needed to rule a role in or out
+                          without opening it. Optional fields render only when
+                          they exist; see the note in `careers.ts`. */}
+                      <ul className="mt-3 flex flex-wrap items-center gap-x-2.5 gap-y-2 font-pixel text-xs uppercase tracking-[0.15em] text-ink-soft">
+                        <li className="border border-ink/15 px-2.5 py-1">
+                          {t(r.employment, locale)}
+                        </li>
+                        <li className="border border-ink/15 px-2.5 py-1">
+                          {r.level}
+                        </li>
+                        <li className="border border-ink/15 px-2.5 py-1">
+                          {r.slots} {t(CAREERS_UI.headcount, locale)}
+                        </li>
+                        {r.workMode ? (
+                          <li className="border border-ink/15 px-2.5 py-1">
+                            {t(r.workMode!, locale)}
+                          </li>
+                        ) : null}
+                        {r.location ? (
+                          <li className="border border-ink/15 px-2.5 py-1">
+                            {t(r.location!, locale)}
+                          </li>
+                        ) : null}
+                        {r.salary ? (
+                          <li className="border border-ember/40 px-2.5 py-1 text-ember">
+                            {t(r.salary!, locale)}
+                          </li>
+                        ) : null}
+                      </ul>
+
+                      <p className="mt-4 max-w-2xl font-viet text-sm font-light leading-relaxed text-ink-soft">
+                        {t(r.summary, locale)}
+                      </p>
+
+                      <ul className="mt-4 flex flex-wrap gap-2">
+                        {r.stack.map((t) => (
+                          <li
+                            key={t}
+                            className="border border-ink/12 bg-white/70 px-2.5 py-1 font-mono text-[11px] text-ink-soft"
+                          >
+                            {t}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    {/* `relative z-10` keeps these above the title's stretched
+                        hit area — otherwise the card link would eat both. */}
+                    <div className="relative z-10 flex shrink-0 flex-col gap-2.5 sm:flex-row lg:flex-col">
+                      <Link
+                        href={localePath(`/tuyen-dung/${r.slug}`, locale)}
+                        className="font-pixel inline-flex items-center justify-center gap-2 whitespace-nowrap border-2 border-ink/30 px-5 py-2.5 text-base uppercase tracking-[0.12em] text-ink transition-colors duration-200 hover:border-ember hover:bg-ink/5 hover:text-ember"
+                      >
+                        {t(CAREERS_UI.viewDetail, locale)}
+                      </Link>
+                      <Link
+                        href={localePath(applyPath(r.slug), locale)}
+                        className="btn-pixel font-pixel inline-flex items-center justify-center gap-2 whitespace-nowrap px-5 py-2.5 text-base uppercase tracking-[0.12em]"
+                      >
+                        {t(CAREERS_UI.apply, locale)} <span aria-hidden>▸</span>
+                      </Link>
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+
+      {/* ── Quyền lợi ── */}
+      <div className="mx-auto mt-20 max-w-6xl px-5 sm:px-8">
+        <h2 className="s-rise font-pixel text-[clamp(1.6rem,4vw,2.75rem)] uppercase tracking-wide text-ink">
+          {t(CAREERS_UI.benefits, locale)}
+        </h2>
+        <ul className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
+          {PERKS.map((p) => (
+            <li
+              key={p.title.vi}
+              className="s-rise border border-ink/15 paper-card p-5 backdrop-blur-md"
+            >
+              <h3 className="font-viet text-base font-semibold leading-snug text-ink">
+                {t(p.title, locale)}
+              </h3>
+              <p className="mt-2 font-viet text-sm font-light leading-relaxed text-ink-soft">
+                {t(p.desc, locale)}
+              </p>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {/* ── Quy trình ứng tuyển ── */}
+      <div className="mx-auto mt-20 max-w-6xl px-5 sm:px-8">
+        <h2 className="s-rise font-pixel text-[clamp(1.6rem,4vw,2.75rem)] uppercase tracking-wide text-ink">
+          {t(CAREERS_UI.process, locale)}
+        </h2>
+        <ol className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {STEPS.map((s, i) => (
             <li
-              key={s.title}
+              key={s.title.vi}
               className="s-rise relative border border-ink/15 bg-white/50 p-5 backdrop-blur-md"
             >
               <span
@@ -266,27 +232,37 @@ export function Careers({ standalone = true }: { standalone?: boolean } = {}) {
               >
                 {String(i + 1).padStart(2, "0")}
               </span>
-              <h4 className="mt-2 font-pixel text-xl uppercase tracking-wide text-ink">
-                {s.title}
-              </h4>
+              <h3 className="mt-2 font-viet text-base font-semibold leading-snug text-ink">
+                {t(s.title, locale)}
+              </h3>
               <p className="mt-2 font-viet text-sm font-light leading-relaxed text-ink-soft">
-                {s.desc}
+                {t(s.desc, locale)}
               </p>
-              {/* Connector arrow between steps (desktop only). */}
-              {i < STEPS.length - 1 ? (
-                <span
-                  aria-hidden
-                  className="absolute -right-3 top-1/2 hidden -translate-y-1/2 font-pixel text-xl text-clay/70 lg:block"
-                >
-                  ▸
-                </span>
-              ) : null}
             </li>
           ))}
         </ol>
       </div>
 
-      <ActGap />
+      {/* ── Không thấy vị trí phù hợp ──
+          Standard on a real careers page, and honest here: the list is three
+          roles long, so a good candidate whose discipline isn't on it is a
+          likely visitor rather than an edge case. */}
+      <div className="s-fade mx-auto mt-20 max-w-6xl px-5 sm:px-8">
+        <div className="border border-ink/15 paper-card p-7 backdrop-blur-md sm:p-9">
+          <h2 className="font-pixel text-[clamp(1.3rem,2.6vw,1.85rem)] uppercase leading-tight text-ink">
+            {t(CAREERS_UI.noFitTitle, locale)}
+          </h2>
+          <p className="mt-3 max-w-2xl font-viet text-sm font-light leading-relaxed text-ink-soft sm:text-base">
+            {t(CAREERS_UI.noFitBody, locale)}
+          </p>
+          <Link
+            href={localePath(applyPath(), locale)}
+            className="btn-pixel font-pixel mt-6 inline-flex items-center gap-2 px-7 py-3 text-lg uppercase tracking-wider"
+          >
+            {t(CAREERS_UI.noFitCta, locale)} <span aria-hidden>▸</span>
+          </Link>
+        </div>
+      </div>
     </section>
   );
 }

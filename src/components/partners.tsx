@@ -1,7 +1,10 @@
 import Image from "next/image";
+import Link from "next/link";
 import DitherButton from "@/components/bits/dither-button";
 import { Chapter } from "@/components/story-kit";
 import { PARTNERS } from "@/lib/partners";
+import { PARTNERS_UI } from "@/lib/dictionary";
+import { localePath, t, type Locale } from "@/lib/i18n";
 
 /**
  * Chương cuối · Đối tác — the first people who said yes, and the page's last word
@@ -41,8 +44,12 @@ import { PARTNERS } from "@/lib/partners";
  * positioning, and three eyebrows plus three paragraphs turns a credibility row
  * into a wall. Wire them up once they are real copy and the row has earned the
  * space.
+ *
+ * A `standalone` variant of this component briefly existed for a `/doi-tac`
+ * route — `<h1>` header plus that placeholder copy. Both are gone: the chapter
+ * lives on the homepage only. Don't re-add the prop without the route.
  */
-export function Partners() {
+export function Partners({ locale }: { locale: Locale }) {
   return (
     <section
       id="partners"
@@ -65,7 +72,7 @@ export function Partners() {
       />
 
       <header className="mx-auto max-w-3xl px-5 text-center sm:px-8">
-        <Chapter label="Đối tác" />
+        <Chapter label={t(PARTNERS_UI.chapter, locale)} />
         {/* One line, and a RESTRAINED one. The old header here was a full
             `Headline` — display-size title plus a lead — and it was cut for
             getting in front of the marks. But a bare row of grey logos under a
@@ -74,8 +81,9 @@ export function Partners() {
             it. The count is derived, not typed, so it cannot go stale the moment
             a fourth partner is added. */}
         <h2 className="s-rise mt-5 font-pixel text-[clamp(1.4rem,3.4vw,2.4rem)] uppercase leading-tight text-ink">
-          {PARTNERS.length} thương hiệu đã{" "}
-          <span className="text-clay">đi cùng</span> chúng tôi
+          {PARTNERS.length} {t(PARTNERS_UI.headingA, locale)}{" "}
+          <span className="text-clay">{t(PARTNERS_UI.headingAccent, locale)}</span>{" "}
+          {t(PARTNERS_UI.headingB, locale)}
         </h2>
       </header>
 
@@ -158,8 +166,7 @@ export function Partners() {
           above the footer it is the final fork: work with us, or join us. */}
       <div className="s-fade mx-auto mt-20 flex max-w-3xl flex-col items-center gap-6 px-5 text-center sm:px-8">
         <p className="font-viet text-base font-light leading-relaxed text-ink-soft sm:text-lg">
-          Bạn đang có một bài toán cần giải bằng công nghệ? Chúng tôi luôn mở cửa
-          cho những hợp tác tạo ra giá trị thật.
+          {t(PARTNERS_UI.invitation, locale)}
         </p>
 
         {/* The primary action keeps `DitherButton` rather than the site-wide
@@ -169,28 +176,28 @@ export function Partners() {
 
             "BẮT ĐẦU MỘT DỰ ÁN", NOT "LIÊN HỆ HỢP TÁC". The nav carries a fixed
             "Liên hệ hợp tác" button that is on screen at the same time as this
-            one, both pointing at `#contact`. Two identical labels in two different
-            styles read as a mistake even when nobody can say why. Same
+            one, both pointing at `/lien-he`. Two identical labels in two
+            different styles read as a mistake even when nobody can say why. Same
             destination, different words, and this one names the outcome rather
             than the mechanism. */}
         <div className="flex flex-col items-center gap-4 sm:flex-row">
           {/* `ditherColor` is a literal hex, not a CSS var: the pattern is
               painted into a canvas and `parseHex` can only read hex. */}
           <DitherButton
-            href="#contact"
+            href={localePath("/lien-he", locale)}
             ditherColor="#e8541f"
             ditherOpacity={0.22}
             ditherSize={5}
             className="gap-2 px-8 py-3 text-lg"
           >
-            Bắt đầu một dự án <span aria-hidden>▸</span>
+            {t(PARTNERS_UI.ctaProject, locale)} <span aria-hidden>▸</span>
           </DitherButton>
-          <a
-            href="/tuyen-dung"
+          <Link
+            href={localePath("/tuyen-dung", locale)}
             className="font-pixel inline-flex items-center gap-2 border-2 border-ink/40 px-7 py-3 text-lg uppercase tracking-wider text-ink transition-colors duration-200 hover:border-ember hover:bg-ink/5 hover:text-ember"
           >
-            Gia nhập đội ngũ
-          </a>
+            {t(PARTNERS_UI.ctaJoin, locale)}
+          </Link>
         </div>
       </div>
 

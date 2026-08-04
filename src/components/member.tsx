@@ -2,18 +2,15 @@
 
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
-import {
-  MEMBERS,
-  COMPANY_NAME,
-  COMPANY_QUOTE,
-  type Member,
-} from "@/lib/members";
+import { MEMBERS, COMPANY_NAME, type Member } from "@/lib/members";
+import { TEAM_UI } from "@/lib/dictionary";
+import { t, type Locale } from "@/lib/i18n";
 
 // Founder leads the roster (members.ts is ordered so) → default-selected
 // character + first avatar.
 const DEFAULT = MEMBERS[0];
 
-export function Member() {
+export function Member({ locale }: { locale: Locale }) {
   // Locally-tracked selection — the viewer always has a character on stage
   // (defaults to the founder) and is self-contained: it doesn't touch the
   // global nav state, which belongs to the light <Hero/> sitting above.
@@ -99,11 +96,11 @@ export function Member() {
 
   // The profile reads as a "dossier" — six labeled lines + a motto footer.
   const rows: [string, string][] = [
-    ["Họ và tên", selected.fullName],
-    ["Chức vụ", selected.title],
-    ["Quê quán", selected.hometown],
-    ["Sở thích", selected.hobbies],
-    ["Ngày gia nhập công ty", selected.joinDate],
+    [t(TEAM_UI.fullName, locale), selected.fullName],
+    [t(TEAM_UI.role, locale), t(selected.title, locale)],
+    [t(TEAM_UI.hometown, locale), selected.hometown],
+    [t(TEAM_UI.hobbies, locale), t(selected.hobbies, locale)],
+    [t(TEAM_UI.joinDate, locale), selected.joinDate],
   ];
 
   return (
@@ -129,7 +126,7 @@ export function Member() {
       <Image
         key={`bg-${selected.slug}`}
         src={selected.hometownImg}
-        alt={`${selected.hometown} — quê hương của ${selected.fullName}`}
+        alt={`${selected.hometown} — ${t(TEAM_UI.hometownAlt, locale)} ${selected.fullName}`}
         fill
         priority={isDefault}
         unoptimized
@@ -247,10 +244,12 @@ export function Member() {
             </div>
 
             <div className="mt-5 border-t border-cream/10 pt-4">
-              <p className="text-sm text-cream/65">Châm ngôn sống</p>
+              <p className="text-sm text-cream/65">
+                {t(TEAM_UI.motto, locale)}
+              </p>
               <p className="mt-1 text-base italic leading-snug text-cream sm:text-[17px]">
                 <span style={{ color: tint }}>“</span>
-                {selected.motto}
+                {t(selected.motto, locale)}
                 <span style={{ color: tint }}>”</span>
               </p>
             </div>
@@ -270,9 +269,9 @@ export function Member() {
           <h1 className="font-pixel text-4xl font-light uppercase leading-[0.95] tracking-[0.04em] text-cream [text-shadow:0_3px_30px_rgba(0,0,0,0.8)] sm:text-5xl lg:text-[4.2rem] lg:whitespace-nowrap">
             {COMPANY_NAME}
           </h1>
-          <p className="mt-4 font-pixel text-base font-light text-cream/85 [text-shadow:0_1px_14px_rgba(0,0,0,0.9)] sm:text-lg lg:text-xl">
-            {COMPANY_QUOTE}
-          </p>
+          {/* The tagline that sat here ("Cùng việt nam kiến tạo đội ngũ thế hệ
+              trẻ mới") was removed. `COMPANY_QUOTE` is still exported from
+              `members.ts` but now has no caller — see the note there. */}
         </div>
       </div>
 
@@ -285,7 +284,7 @@ export function Member() {
         <p className="mb-3 flex flex-wrap items-center justify-center gap-x-2 text-center font-pixel text-sm text-cream/70 [text-shadow:0_1px_8px_rgba(0,0,0,0.9)]">
           <span className="font-semibold text-cream">{selected.fullName}</span>
           <span className="text-cream/30">·</span>
-          <span style={{ color: tint }}>{selected.title}</span>
+          <span style={{ color: tint }}>{t(selected.title, locale)}</span>
           {/* Discoverability hint for the ← / → keyboard navigation. */}
           <span
             aria-hidden

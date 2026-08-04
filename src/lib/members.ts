@@ -1,4 +1,5 @@
 import type { StaticImageData } from "next/image";
+import type { L } from "@/lib/i18n";
 import binhImg from "../../public/members/cutout/binh.png";
 import viImg from "../../public/members/cutout/vi.png";
 import duongImg from "../../public/members/cutout/duong.png";
@@ -69,9 +70,15 @@ export type Member = {
   skills: Skill[];
   pose?: Pose; // standing position (legacy lineup field)
 
-  // --- Vietnamese profile block (hero panel; rendered in font-viet) ---
+  // --- Profile block (hero panel; rendered in font-viet) ---
+  //
+  // ONLY PROSE IS `L`. `fullName`, `hometown` and `joinDate` stay plain strings
+  // because they are proper nouns and a date: a person's name does not have an
+  // English version, "Nam Định" is "Nam Định" in any language, and translating
+  // either would be inventing a second identity for a real person. `title`,
+  // `hobbies` and `motto` are prose and carry both languages.
   fullName: string; // Họ và tên — e.g. "Trần Đình Thiên Tân"
-  title: string; // Chức vụ — e.g. "Founder"
+  title: L; // Chức vụ — e.g. "Founder"
   /**
    * Cấp bậc — the real engineering seniority shown on the member card, replacing
    * the old RPG `level`. LEFT UNSET ON PURPOSE: it is a fact about a specific
@@ -80,15 +87,22 @@ export type Member = {
    * filled in rather than displaying a guess.
    */
   seniority?: string;
-  hometown: string; // Quê quán — e.g. "Nam Định"
-  hobbies: string; // Sở thích — e.g. "Lập trình, Thể thao, Âm nhạc"
+  hometown: string; // Quê quán — e.g. "Nam Định" (proper noun, not translated)
+  hobbies: L; // Sở thích — e.g. "Lập trình, Thể thao, Âm nhạc"
   joinDate: string; // Ngày gia nhập công ty — e.g. "01/06/2026"
-  motto: string; // Châm ngôn sống
+  motto: L; // Châm ngôn sống
   hometownImg: StaticImageData; // full-bleed backdrop of the member's hometown
 };
 
 /** Company identity shown in the hero (constant across members). */
 export const COMPANY_NAME = "VIET NAM Z - DNA";
+
+/**
+ * ORPHANED — nothing renders this any more. It was the tagline under the wordmark
+ * on `/doi-ngu` and was removed from `member.tsx`. Kept because it is written
+ * copy rather than code (same convention as `story.ts`); delete it outright if
+ * the line isn't coming back.
+ */
 export const COMPANY_QUOTE = "Cùng việt nam kiến tạo đội ngũ thế hệ trẻ mới";
 
 // Founder is first so he is the default-selected character + leading avatar.
@@ -110,11 +124,11 @@ export const MEMBERS: Member[] = [
     ],
     pose: { order: 0, y: 3.4 },
     fullName: "Trần Đình Thiên Tân",
-    title: "CCO/CTO",
+    title: { vi: "CCO/CTO", en: "CCO/CTO" },
     hometown: "Nam Định",
-    hobbies: "Lập trình, Thể Thao, Âm Nhạc",
+    hobbies: { vi: "Lập trình, Thể Thao, Âm Nhạc", en: "Coding, Sport, Music" },
     joinDate: "01/06/2026",
-    motto: "Sống là phải để lại tiếng thơm cho đời",
+    motto: { vi: "Sống là phải để lại tiếng thơm cho đời", en: "Live so that your name is worth remembering" },
     hometownImg: namdinhImg,
   },
   {
@@ -134,11 +148,11 @@ export const MEMBERS: Member[] = [
     ],
     pose: { order: 1, y: 2 },
     fullName: "Nguyễn Đức Bình",
-    title: "CEO",
+    title: { vi: "CEO", en: "CEO" },
     hometown: "Hải Dương",
-    hobbies: "Đọc sách, Cờ vua, Cà phê",
+    hobbies: { vi: "Đọc sách, Cờ vua, Cà phê", en: "Reading, Chess, Coffee" },
     joinDate: "15/06/2026",
-    motto: "Nền móng có vững thì nhà mới cao",
+    motto: { vi: "Nền móng có vững thì nhà mới cao", en: "Build the foundation right and the house can go high" },
     hometownImg: haiduongImg,
   },
   {
@@ -158,11 +172,11 @@ export const MEMBERS: Member[] = [
     ],
     pose: { order: 2, y: 3.5 },
     fullName: "Lê Thảo Vi",
-    title: "Product Designer",
+    title: { vi: "Product Designer", en: "Product Designer" },
     hometown: "Kon Tum",
-    hobbies: "Vẽ tranh, Nhiếp ảnh, Cây cảnh",
+    hobbies: { vi: "Vẽ tranh, Nhiếp ảnh, Cây cảnh", en: "Painting, Photography, Plants" },
     joinDate: "20/06/2026",
-    motto: "Đơn giản là đỉnh cao của sự tinh tế",
+    motto: { vi: "Đơn giản là đỉnh cao của sự tinh tế", en: "Simplicity is the highest form of refinement" },
     hometownImg: kontumImg,
   },
   {
@@ -182,11 +196,11 @@ export const MEMBERS: Member[] = [
     ],
     pose: { order: 3, y: 3.4 },
     fullName: "Phạm Gia Huy",
-    title: "Trưởng nhóm Chiến lược",
+    title: { vi: "Trưởng nhóm Chiến lược", en: "Strategy Lead" },
     hometown: "Nha Trang",
-    hobbies: "Bóng đá, Du lịch, Đầu tư",
+    hobbies: { vi: "Bóng đá, Du lịch, Đầu tư", en: "Football, Travel, Investing" },
     joinDate: "01/07/2026",
-    motto: "Nhìn xa trông rộng, đi trước một bước",
+    motto: { vi: "Nhìn xa trông rộng, đi trước một bước", en: "See far, look wide, move one step ahead" },
     hometownImg: nhatrangImg,
   },
   {
@@ -206,11 +220,11 @@ export const MEMBERS: Member[] = [
     ],
     pose: { order: 4, y: 1.6 },
     fullName: "Trương Tùng Dương",
-    title: "Kỹ sư Full-Stack",
+    title: { vi: "Kỹ sư Full-Stack", en: "Full-Stack Engineer" },
     hometown: "Quảng Ngãi",
-    hobbies: "Leo núi, Game, Phim ảnh",
+    hobbies: { vi: "Leo núi, Game, Phim ảnh", en: "Climbing, Games, Film" },
     joinDate: "10/07/2026",
-    motto: "Không gì là không thể, chỉ là chưa làm",
+    motto: { vi: "Không gì là không thể, chỉ là chưa làm", en: "Nothing is impossible — only not attempted yet" },
     hometownImg: quangngaiImg,
   },
   {
@@ -230,11 +244,11 @@ export const MEMBERS: Member[] = [
     ],
     pose: { order: 5, y: 1.6 },
     fullName: "Đỗ Hải Dương",
-    title: "Kỹ sư Full-Stack",
+    title: { vi: "Kỹ sư Full-Stack", en: "Full-Stack Engineer" },
     hometown: "Bình Dương",
-    hobbies: "Chạy bộ, Nấu ăn, Podcast",
+    hobbies: { vi: "Chạy bộ, Nấu ăn, Podcast", en: "Running, Cooking, Podcasts" },
     joinDate: "15/07/2026",
-    motto: "Mỗi ngày học thêm một điều mới",
+    motto: { vi: "Mỗi ngày học thêm một điều mới", en: "Learn one new thing every day" },
     hometownImg: binhduongImg,
   },
   {
@@ -254,11 +268,11 @@ export const MEMBERS: Member[] = [
     ],
     pose: { order: 6, y: 3.4 },
     fullName: "Võ Thành Danh",
-    title: "Trưởng nhóm Chiến lược",
+    title: { vi: "Trưởng nhóm Chiến lược", en: "Strategy Lead" },
     hometown: "Nhơn Trạch",
-    hobbies: "Cầu lông, Lịch sử, Trà đạo",
+    hobbies: { vi: "Cầu lông, Lịch sử, Trà đạo", en: "Badminton, History, Tea" },
     joinDate: "01/08/2026",
-    motto: "Kiên trì là chìa khóa của thành công",
+    motto: { vi: "Kiên trì là chìa khóa của thành công", en: "Persistence is the key to everything" },
     hometownImg: nhontrachImg,
   },
   {
@@ -278,11 +292,11 @@ export const MEMBERS: Member[] = [
     ],
     pose: { order: 7, y: 3.4 },
     fullName: "Nguyễn Thu Hương",
-    title: "Trưởng nhóm Chiến lược",
+    title: { vi: "Trưởng nhóm Chiến lược", en: "Strategy Lead" },
     hometown: "Ninh Bình",
-    hobbies: "Yoga, Viết lách, Làm bánh",
+    hobbies: { vi: "Yoga, Viết lách, Làm bánh", en: "Yoga, Writing, Baking" },
     joinDate: "12/08/2026",
-    motto: "Tâm sáng thì việc gì cũng thành",
+    motto: { vi: "Tâm sáng thì việc gì cũng thành", en: "With a clear heart, any work succeeds" },
     hometownImg: ninhbinhImg,
   },
   {
@@ -302,11 +316,11 @@ export const MEMBERS: Member[] = [
     ],
     pose: { order: 8, y: 3.4 },
     fullName: "Lý Tấn Hùng",
-    title: "Trưởng nhóm Chiến lược",
+    title: { vi: "Trưởng nhóm Chiến lược", en: "Strategy Lead" },
     hometown: "Bình Định",
-    hobbies: "Guitar, Phượt, Bóng rổ",
+    hobbies: { vi: "Guitar, Phượt, Bóng rổ", en: "Guitar, Road trips, Basketball" },
     joinDate: "01/09/2026",
-    motto: "Làm hết sức, chơi hết mình",
+    motto: { vi: "Làm hết sức, chơi hết mình", en: "Work all the way, play all the way" },
     hometownImg: binhdinhImg,
   },
   {
@@ -326,11 +340,11 @@ export const MEMBERS: Member[] = [
     ],
     pose: { order: 9, y: 3.4 },
     fullName: "Huỳnh Hoài Nam",
-    title: "Trưởng nhóm Chiến lược",
+    title: { vi: "Trưởng nhóm Chiến lược", en: "Strategy Lead" },
     hometown: "Bến Tre",
-    hobbies: "Câu cá, Bơi lội, Làm vườn",
+    hobbies: { vi: "Câu cá, Bơi lội, Làm vườn", en: "Fishing, Swimming, Gardening" },
     joinDate: "15/09/2026",
-    motto: "Chậm mà chắc, chắc mà bền",
+    motto: { vi: "Chậm mà chắc, chắc mà bền", en: "Slow but sure, sure but lasting" },
     hometownImg: bentreImg,
   },
   {
@@ -350,11 +364,11 @@ export const MEMBERS: Member[] = [
     ],
     pose: { order: 10, y: 3.4 },
     fullName: "Đặng Minh Quân",
-    title: "Trưởng nhóm Chiến lược",
+    title: { vi: "Trưởng nhóm Chiến lược", en: "Strategy Lead" },
     hometown: "Sài Gòn",
-    hobbies: "Cờ tướng, Sưu tầm, Thiền",
+    hobbies: { vi: "Cờ tướng, Sưu tầm, Thiền", en: "Chinese chess, Collecting, Meditation" },
     joinDate: "01/10/2026",
-    motto: "Tĩnh để chế ngự động",
+    motto: { vi: "Tĩnh để chế ngự động", en: "Stillness masters motion" },
     hometownImg: saigonImg,
   },
 ];
@@ -369,15 +383,22 @@ export const MEMBERS: Member[] = [
  * These were inferred from the titles, not supplied — check them against the real
  * org chart before this ships.
  */
-export const DEPARTMENT_BY_TITLE: Record<string, string> = {
-  "CEO": "Ban điều hành",
-  "CCO/CTO": "Ban điều hành",
-  "Product Designer": "Design",
-  "Kỹ sư Full-Stack": "Engineering",
-  "Trưởng nhóm Chiến lược": "Chiến lược",
+export const DEPARTMENT_BY_TITLE: Record<string, L> = {
+  CEO: { vi: "Ban điều hành", en: "Leadership" },
+  "CCO/CTO": { vi: "Ban điều hành", en: "Leadership" },
+  "Product Designer": { vi: "Thiết kế", en: "Design" },
+  "Kỹ sư Full-Stack": { vi: "Kỹ thuật", en: "Engineering" },
+  "Trưởng nhóm Chiến lược": { vi: "Chiến lược", en: "Strategy" },
 };
 
-/** Department for a member's title; falls back to the title itself if unmapped. */
-export function departmentOf(title: string): string {
-  return DEPARTMENT_BY_TITLE[title] ?? title;
+/**
+ * Department for a member's title, falling back to the title itself if unmapped.
+ *
+ * KEYED ON THE VIETNAMESE TITLE, which is the stable identifier — the English
+ * one is a translation of it, so keying on whichever language happened to be
+ * active would make the lookup miss on `/en` and silently print the job title
+ * where the department belongs.
+ */
+export function departmentOf(title: L): L {
+  return DEPARTMENT_BY_TITLE[title.vi] ?? title;
 }

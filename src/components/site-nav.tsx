@@ -2,7 +2,18 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { NAV as NAV_UI, NAV_LABELS } from "@/lib/dictionary";
+import {
+  LOCALES,
+  LOCALE_LABEL,
+  LOCALE_NAME,
+  localePath,
+  stripLocale,
+  t,
+  type Locale,
+} from "@/lib/i18n";
 
 /**
  * Site navigation — burger-only, at every breakpoint.
@@ -27,33 +38,36 @@ import { useEffect, useRef, useState } from "react";
  */
 
 /**
- * Menu destinations — one entry per homepage chapter, in story order, so the
- * overlay reads as a table of contents. The numbering and the open stagger both
- * derive from this array, and every href must resolve to a real section id on the
- * page (`src/app/page.tsx`); never list a chapter that isn't mounted.
+ * Menu destinations. The numbering and the open stagger both derive from this
+ * array.
  *
- * "Con đường" (#way) is gone rather than merely unlisted — that chapter was cut
- * from the page, so there is no id left for it to point at.
- */
-/**
- * Root-relative on purpose. The nav renders on `/doi-ngu` and `/tuyen-dung` too,
- * where none of these sections exist — bare `#story` / `#products` anchors were
- * silently dead on both subpages (they resolved to nothing and the click did
- * nothing). `/#id` navigates home and then scrolls. `#contact` stays bare because
- * the footer carries that id on every page.
+ * EVERY ENTRY IS A REAL ROUTE, and none should come back as a `#` anchor. This
+ * list used to be half homepage bookmarks — `/#story`, `/#products`,
+ * `/#partners`, `#contact` — which behaved differently depending on where you
+ * clicked them: on the homepage they scrolled, and from a subpage they navigated
+ * home and dropped you into the middle of a chapter (or, for the bare
+ * `#contact`, to the bottom of the page you were already on). A menu entry is a
+ * destination, not a scroll position.
+ *
+ * SO THE MENU IS SHORT, and that is the intended shape rather than an omission.
+ * Câu chuyện, Dấu ấn VNZ and Đối tác are NOT listed: they are homepage chapters
+ * with no route of their own, and the homepage is what leads to them. (Routes for
+ * all three were built and then cut — don't add the labels back pointing at
+ * `/#story` & co., which is exactly the arrangement this replaced. They earn a
+ * menu slot again when they earn a page.)
+ *
+ * Every href must resolve to a directory under `src/app/` — keep in step with
+ * `FOOTER_NAV` in `src/lib/site.ts`.
  */
 const NAV = [
-  { href: "/", label: "Trang chủ" },
-  { href: "/#story", label: "Câu chuyện" },
-  { href: "/#products", label: "Dấu ấn VNZ" },
-  { href: "/doi-ngu", label: "Đội ngũ" },
-  { href: "/#partners", label: "Đối tác" },
-  { href: "/tuyen-dung", label: "Tuyển dụng" },
-  { href: "#contact", label: "Liên hệ" },
+  { path: "/", label: NAV_LABELS.home },
+  { path: "/doi-ngu", label: NAV_LABELS.team },
+  { path: "/tin-tuc", label: NAV_LABELS.news },
+  { path: "/tuyen-dung", label: NAV_LABELS.careers },
+  { path: "/lien-he", label: NAV_LABELS.contact },
 ];
 
-const CTA_HREF = "#contact";
-const CTA_LABEL = "Liên hệ hợp tác";
+const CTA_PATH = "/lien-he";
 
 /**
  * `tone` describes what the bar sits ON at scroll-top, not the bar itself.
@@ -64,11 +78,31 @@ const CTA_LABEL = "Liên hệ hợp tác";
  * Once scrolled or opened, both tones converge on cream, so this only governs
  * the top-of-page state.
  */
-export function SiteNav({ tone = "light" }: { tone?: "light" | "dark" } = {}) {
+export function SiteNav({
+  locale,
+  tone = "light",
+}: {
+  locale: Locale;
+  tone?: "light" | "dark";
+}) {
   const [scrolled, setScrolled] = useState(false);
   const [hidden, setHidden] = useState(false);
   const [open, setOpen] = useState(false);
   const lastY = useRef(0);
+
+  /**
+   * The language switcher stays on the SAME PAGE across a swap — `/en/tin-tuc`
+   * ⇄ `/tin-tuc` — instead of dumping the reader on the homepage, which is what
+   * a switcher hard-coded to `/` or `/en` does and is the fastest way to make
+   * someone stop using it.
+   *
+   * `usePathname()` reports the BROWSER's path, not the rewritten internal one,
+   * so a Vietnamese page reads back as `/tin-tuc` (unprefixed) exactly as
+   * `stripLocale` expects. Don't swap this for the `locale` prop plus a manual
+   * concat — the prop knows the language but not where in the site you are.
+   */
+  const pathname = usePathname();
+  const { path: barePath } = stripLocale(pathname ?? "/");
 
   useEffect(() => {
     const onScroll = () => {
@@ -113,7 +147,11 @@ export function SiteNav({ tone = "light" }: { tone?: "light" | "dark" } = {}) {
         <nav className="mx-auto flex max-w-[92rem] items-center justify-between px-4 py-3 sm:px-7 sm:py-4">
           {/* No backing plate at any scroll position — the logo sits directly
               on the page. */}
-          <Link href="/" aria-label="VNZ — trang chủ" className="shrink-0">
+          <Link
+            href={localePath("/", locale)}
+            aria-label={t(NAV_UI.homeAria, locale)}
+            className="shrink-0"
+          >
             <Image
               src={
                 onLightHero
@@ -132,17 +170,21 @@ export function SiteNav({ tone = "light" }: { tone?: "light" | "dark" } = {}) {
           </Link>
 
           <div className="flex shrink-0 items-center gap-2.5 sm:gap-3">
-            <a
-              href={CTA_HREF}
+            {/* `Link`, not `<a>` — now that this is a route rather than a
+                `#contact` anchor, an `<a>` would do a full document reload on
+                every click and drop the whole app shell. Same for the overlay
+                entries below. */}
+            <Link
+              href={localePath(CTA_PATH, locale)}
               className="hidden shrink-0 whitespace-nowrap bg-ember px-5 py-3 font-pixel text-base uppercase leading-none tracking-[0.1em] text-cream shadow-[4px_4px_0_0_rgba(0,0,0,0.5)] transition-[background-color,transform,box-shadow] duration-150 hover:bg-sunset active:translate-x-1 active:translate-y-1 active:shadow-none sm:block sm:text-lg"
             >
-              {CTA_LABEL}
-            </a>
+              {t(NAV_UI.cta, locale)}
+            </Link>
 
             <button
               type="button"
               onClick={() => setOpen((v) => !v)}
-              aria-label={open ? "Đóng menu" : "Mở menu"}
+              aria-label={t(open ? NAV_UI.closeMenu : NAV_UI.openMenu, locale)}
               aria-expanded={open}
               aria-controls="site-menu"
               className={`relative z-[70] flex h-[3.25rem] w-[3.25rem] shrink-0 flex-col items-center justify-center gap-[7px] transition-[background-color,box-shadow,border-color,color] duration-300 ${
@@ -191,11 +233,14 @@ export function SiteNav({ tone = "light" }: { tone?: "light" | "dark" } = {}) {
           className="pointer-events-none absolute inset-0 [background:radial-gradient(90%_70%_at_78%_18%,rgba(232,84,31,0.16),transparent_70%)]"
         />
         <div className="relative flex h-full flex-col justify-between overflow-y-auto px-5 pb-10 pt-28 sm:px-8 sm:pt-32">
-          <nav aria-label="Điều hướng chính" className="mx-auto w-full max-w-[92rem]">
+          <nav
+            aria-label={t(NAV_UI.primaryNav, locale)}
+            className="mx-auto w-full max-w-[92rem]"
+          >
             <ul className="flex flex-col">
               {NAV.map((item, i) => (
                 <li
-                  key={item.href}
+                  key={item.path}
                   className="border-b border-cream/10"
                   style={{
                     transform: open ? "none" : "translateY(18px)",
@@ -205,8 +250,8 @@ export function SiteNav({ tone = "light" }: { tone?: "light" | "dark" } = {}) {
                     }ms, opacity 420ms ease ${60 + i * 55}ms`,
                   }}
                 >
-                  <a
-                    href={item.href}
+                  <Link
+                    href={localePath(item.path, locale)}
                     onClick={() => setOpen(false)}
                     className="group flex items-baseline gap-5 py-3 text-cream sm:gap-8 sm:py-4"
                   >
@@ -217,9 +262,9 @@ export function SiteNav({ tone = "light" }: { tone?: "light" | "dark" } = {}) {
                         the full chapter list has to fit a laptop viewport without
                         the overlay turning into a scroll of its own. */}
                     <span className="font-pixel text-[clamp(1.6rem,5.5vw,3.25rem)] uppercase leading-none tracking-[0.02em] transition-[transform,color] duration-300 group-hover:translate-x-3 group-hover:text-ember">
-                      {item.label}
+                      {t(item.label, locale)}
                     </span>
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -231,13 +276,13 @@ export function SiteNav({ tone = "light" }: { tone?: "light" | "dark" } = {}) {
                 transition: "opacity 420ms ease 300ms",
               }}
             >
-              <a
-                href={CTA_HREF}
+              <Link
+                href={localePath(CTA_PATH, locale)}
                 onClick={() => setOpen(false)}
                 className="inline-block bg-ember px-6 py-4 font-pixel text-xl uppercase leading-none tracking-[0.1em] text-cream shadow-[5px_5px_0_0_#000] transition-colors hover:bg-sunset"
               >
-                {CTA_LABEL} <span aria-hidden>▸</span>
-              </a>
+                {t(NAV_UI.cta, locale)} <span aria-hidden>▸</span>
+              </Link>
             </div>
           </nav>
 
@@ -251,20 +296,46 @@ export function SiteNav({ tone = "light" }: { tone?: "light" | "dark" } = {}) {
             <p className="font-ui text-[9px] uppercase tracking-[0.3em] text-gold">
               Vietnamese Minds · Global Solutions
             </p>
-            {/* Vietnamese is the only build that exists, so the English entry is
-                shown as pending rather than faked with a dead link. */}
-            <span className="flex items-center gap-2 font-pixel text-base uppercase tracking-[0.12em]">
-              <span className="text-ember">VI</span>
-              <span aria-hidden className="text-cream/25">
-                |
-              </span>
-              <span
-                title="Bản tiếng Anh đang được xây dựng"
-                className="cursor-not-allowed text-cream/35"
-              >
-                EN
-              </span>
-            </span>
+            {/* ── Language switcher ──
+                It used to be a dead "EN" with a `cursor-not-allowed` and a
+                tooltip saying the English build was on its way. It is real now.
+
+                EACH ENTRY IS A `Link` TO THE SAME PAGE in the other language, not
+                a button that re-renders in place: a locale swap changes the URL,
+                so it has to be navigable, shareable and openable in a new tab.
+                `hrefLang` tells crawlers what sits on the other end.
+
+                The active locale renders as plain text rather than a link to
+                itself — a link that does nothing is worse than no link. */}
+            <nav
+              aria-label={t(NAV_UI.switchLanguage, locale)}
+              className="flex items-center gap-2 font-pixel text-base uppercase tracking-[0.12em]"
+            >
+              {LOCALES.map((l, i) => (
+                <span key={l} className="flex items-center gap-2">
+                  {i > 0 ? (
+                    <span aria-hidden className="text-cream/25">
+                      |
+                    </span>
+                  ) : null}
+                  {l === locale ? (
+                    <span aria-current="true" className="text-ember">
+                      {LOCALE_LABEL[l]}
+                    </span>
+                  ) : (
+                    <Link
+                      href={localePath(barePath, l)}
+                      hrefLang={l}
+                      title={LOCALE_NAME[l]}
+                      onClick={() => setOpen(false)}
+                      className="text-cream/60 transition-colors duration-200 hover:text-ember"
+                    >
+                      {LOCALE_LABEL[l]}
+                    </Link>
+                  )}
+                </span>
+              ))}
+            </nav>
           </div>
         </div>
       </div>
