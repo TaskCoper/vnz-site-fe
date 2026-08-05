@@ -4,6 +4,10 @@ import Image from "next/image";
 import { useLayoutEffect, useRef } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import {
+  PixelDrift,
+  type PixelDriftHandle,
+} from "@/components/bits/pixel-drift";
 import { Meteors, Motes } from "@/components/story-kit";
 import { STORY } from "@/lib/dictionary";
 import { t, type Locale } from "@/lib/i18n";
@@ -110,6 +114,8 @@ const SHOW_COLUMNS = false;
 export function StoryTruth({ locale }: { locale: Locale }) {
   const wrap = useRef<HTMLDivElement>(null);
   const stage = useRef<HTMLDivElement>(null);
+  /** The name's particle field. See the DRIFT phase in the timeline below. */
+  const drift = useRef<PixelDriftHandle>(null);
 
   useLayoutEffect(() => {
     const wrapEl = wrap.current;
@@ -231,6 +237,36 @@ export function StoryTruth({ locale }: { locale: Locale }) {
       names.forEach((line, i) => {
         tl.to(line, { opacity: 1, y: 0, ease: "power2.out", duration: 0.9 }, NAME + i * 0.5);
       });
+
+      // ── DRIFT ── the wordmark itself doesn't fade in, it ASSEMBLES: `PixelDrift`
+      // samples the glyphs and flies the pixels in from a ring outside the frame.
+      //
+      // It is scrubbed like everything else on this stage, which is the whole
+      // reason the component was rewritten to take an external 0→1 (see the
+      // header of `bits/pixel-drift.tsx`). The version it was ported from fires
+      // on an IntersectionObserver and eases on its own clock — on a PINNED act
+      // that observer trips the moment the chapter reaches the top of the
+      // viewport, five viewports of scrolling before this beat, and a timer
+      // can't run backwards when the reader scrolls up.
+      //
+      // IT HAS TO BE FINISHED BY THE TAIL HOLD BELOW (NAME + 1.9), which is why
+      // the duration is 1.4 and not longer. Two reasons, and they compound:
+      // the cursor is ignored while the field is still assembling, so a drift
+      // that ran into the hold would leave the name interactive only while the
+      // stage is already shrinking away; and the hold exists to let the payoff
+      // be READ, which it can't be if it's still arriving. So the assembly runs
+      // across the h3's own fade and lands with the body copy at NAME + 1.9.
+      const drifted = { v: 0 };
+      tl.to(
+        drifted,
+        {
+          v: 1,
+          ease: "power2.out",
+          duration: 1.4,
+          onUpdate: () => drift.current?.setProgress(drifted.v),
+        },
+        NAME + 0.5,
+      );
 
       // Tail hold so the name is readable before the stage starts to leave.
       tl.to({}, { duration: 1 }, NAME + 1.9);
@@ -499,11 +535,39 @@ export function StoryTruth({ locale }: { locale: Locale }) {
               halo sitting behind the name. If a glow is wanted here, use
               `text-shadow` — it follows the glyphs even when the text itself is
               transparent. */}
+          {/* THE GRADIENT MOVED ONTO THE INNER SPAN, and it had to. `PixelDrift`
+              redraws this name as particles and hides the real glyphs by taking
+              the element it was handed down to `opacity: 0` — but
+              `background-clip: text` is painted by the ANCESTOR, and clipping it
+              to a transparent child still paints. Left on the h3 the gradient
+              wordmark would sit there, solid, behind the whole effect. On the
+              span it disappears with it, and SSR / no-JS / reduced-motion still
+              get exactly the type that used to be here. */}
           <h3
             data-n
-            className="mx-auto mt-5 max-w-5xl bg-gradient-to-br from-clay via-ember to-lantern bg-clip-text font-pixel text-[clamp(2.25rem,8vw,7rem)] uppercase leading-[0.84] text-transparent"
+            className="mx-auto mt-5 max-w-5xl font-pixel text-[clamp(2.25rem,8vw,7rem)] uppercase leading-[0.84]"
           >
-            {t(STORY.nameBrand, locale)}
+            <PixelDrift
+              ref={drift}
+              text={t(STORY.nameBrand, locale)}
+              textClassName="bg-gradient-to-br from-clay via-ember to-lantern bg-clip-text text-transparent"
+              /* The same three stops the gradient runs through, so the field
+                 reads as the wordmark coming apart rather than as a new
+                 palette arriving. */
+              colors={[
+                "var(--color-clay)",
+                "var(--color-ember)",
+                "var(--color-lantern)",
+              ]}
+              particleCount={50}
+              particleSize={12}
+              /* 110 was the first try and it ate three letters at a time —
+                 "VIETNAM" lost its NAM to a resting cursor. 80 carves a void
+                 you can read the name around. */
+              mouseRadius={80}
+              mouseForce={30}
+              pad={140}
+            />
           </h3>
           <p
             data-n
