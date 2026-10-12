@@ -88,7 +88,7 @@ export function Partners({ locale }: { locale: Locale }) {
       </header>
 
       {/* ── The marks ──
-          A plain grid: one column on phones, three abreast from `sm` up. No
+          A plain grid: one column on phones, two abreast from `sm` up. No
           horizontal scroll, nothing moving — see the note at the top of the file.
 
           THIS IS WHAT SCALES, and it is why the marquee is not coming back on its
@@ -98,7 +98,7 @@ export function Partners({ locale }: { locale: Locale }) {
           and got them wrong the moment the list changed. If the row ever has to
           stay ONE line regardless of count, that is the case for bringing the belt
           back — not the count itself. */}
-      <ul className="mx-auto mt-14 grid max-w-5xl list-none grid-cols-1 items-start gap-10 px-5 sm:grid-cols-3 sm:gap-8 sm:px-8">
+      <ul className="mx-auto mt-14 grid max-w-5xl list-none grid-cols-1 items-start gap-10 px-5 sm:grid-cols-2 sm:gap-8 sm:px-8">
         {PARTNERS.map((p) => {
           const mark = (
             <>

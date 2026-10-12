@@ -7,7 +7,6 @@ import type { StaticImageData } from "next/image";
 // stage and lets `mix-blend-multiply` melt the white away while preserving the
 // brand colors + anti-aliasing perfectly (see `src/components/partners.tsx`).
 // Swap the import (not a hardcoded size) to change a mark.
-import piedteamLogo from "../../public/partners/piedteam.png";
 import hoatheomuaLogo from "../../public/partners/hoatheomua.png";
 import bmtLogo from "../../public/partners/bmt.png";
 
@@ -53,14 +52,5 @@ export const PARTNERS: Partner[] = [
       "Đối tác thiết kế & thi công nội thất — đồng hành cùng VNZ kiến tạo những không gian sống mang đậm dấu ấn riêng.",
     tint: "var(--color-gold)",
     logo: bmtLogo,
-  },
-  {
-    slug: "piedteam",
-    name: "PiedTeam",
-    category: "Công nghệ · Sáng tạo",
-    blurb:
-      "Đội ngũ sáng tạo đồng hành cùng VNZ trên những sản phẩm số và giải pháp công nghệ thế hệ mới.",
-    tint: "var(--color-jade)",
-    logo: piedteamLogo,
   },
 ];
